@@ -1,0 +1,89 @@
+version: '3'
+services:
+  mariadb:
+    image: mariadb:10-jammy
+    container_name: ${MARIADB_HOSTNAME}
+    restart: always
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    ports:
+      - ${MARIADB_PORT}:${MARIADB_PORT}
+    volumes:
+      # - ./mariadb/data:/var/lib/mariadb
+      # - ./mariadb/conf:/etc/mariadb/conf.d
+      - ./mariadb/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -P ${MARIADB_PORT} -u${MARIADB_USER} -p${MARIADB_PASSWORD} | grep 'mysqld is alive' || exit 1"]
+      interval: 10s
+      timeout: 2s
+      retries: 3
+    networks:
+      - ancient-coins-net
+  
+  go-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # image: golang:latest
+    container_name: ${GO_SERVER_HOST}
+    # restart: always
+    tty: true
+    ports: 
+      - ${GO_SERVER_PORT}:${GO_SERVER_PORT}
+    env_file:
+      - ./app.env
+    volumes:
+      # - ./api/logs:/app/logs
+      - ./home:/home
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - ancient-coins-net
+  
+  # front-end:
+  #   image: node
+  #   volumes:
+  #     - ./app:/app
+  #   command: sh -c "npm install -g create-react-app && create-react-app ancient-coins && cd ancient-coins && yarn start"
+  #   ports:
+  #     - "3000:3000"
+  #   stdin_open: true
+  #   networks:
+  #     - ancient-coins-net
+  
+  Nginx:
+    image: nginx:latest
+    container_name: ${NGINX_HOSTNAME}
+    ports:
+      - ${NGINX_PORT}:${NGINX_PORT}
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - ancient-coins-net
+
+networks:
+  ancient-coins-net:
+    driver: bridge
+
+
+
+# build:
+#   context: .
+#   dockerfile: Dockerfile
+# image: mariadb_custom:latest
+# environment:
+#   MYSQL_ROOT_PASSWORD: password
+#   MYSQL_DATABASE: mydatabase
+#   MYSQL_USER: user
+#   MYSQL_PASSWORD: password
+# volumes:
+#   - ./.data:/home
+# ports:
+#   - "1124:1124"
