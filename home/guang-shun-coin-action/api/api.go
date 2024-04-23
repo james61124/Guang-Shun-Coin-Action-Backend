@@ -28,8 +28,8 @@ func Main() {
 	r := gin.Default()
 
 	// // Users (no token validation)
-	r.POST("/register", user.Register)
-	// r.POST("/user/login", user.Login)
+	r.POST("/user/register", user.Register)
+	r.POST("/user/login", user.Login)
 
 	// // Auth middleware for all routes below
 	// r.Use(auth.ValidateToken)

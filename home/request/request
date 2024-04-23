@@ -1,0 +1,3 @@
+curl -X POST -H "Content-Type: application/json" -d '{"Username": "james", "Password": "jamespassword", "Email": "james51124@gmail.com", "FbAccount": "xxx" }' http://localhost:81/user/register
+
+curl -X POST -H "Content-Type: application/json" -d '{"Username": "james", "Password": "jamespassword" }' http://localhost:81/user/login

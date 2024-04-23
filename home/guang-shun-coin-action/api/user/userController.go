@@ -1,7 +1,7 @@
 package user
 
 import (
-	// "Fortune_Tracker_API/internal/auth"
+	"Guang_Shun_Coin_Action/internal/auth"
 	"Guang_Shun_Coin_Action/internal/response"
 	"Guang_Shun_Coin_Action/pkg/logger"
 	"net/http"
@@ -12,8 +12,18 @@ import (
 )
 
 type registerRequest struct {
-	username string `json:"username" binding:"required"`
-	password string `json:"password" binding:"required"`
+	UserID string `json:"UserID"`
+	Username string `json:"Username" binding:"required"`
+	Password string `json:"Password" binding:"required"`
+	Cellphone string `json:"Cellphone"`
+	FbAccount string `json:"FbAccount"`
+	Email string `json:"Email"`
+	Address string `json:"Address"`
+}
+
+type loginRequest struct {
+	Username    string `json:"Username" binding:"required"`
+	Password string `json:"Password" binding:"required"`
 }
 
 // type updateRequest struct {
@@ -21,11 +31,6 @@ type registerRequest struct {
 // 	Username string `json:"Username" binding:"required"`
 // 	Email    string `json:"Email" binding:"required"`
 // 	Is_Pro   bool   `json:"Is_Pro"`
-// }
-
-// type loginRequest struct {
-// 	Email    string `json:"Email" binding:"required"`
-// 	Password string `json:"Password" binding:"required"`
 // }
 
 func Register(c *gin.Context) {
@@ -43,19 +48,15 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// Check pass in fields (Email has @ symbol)
-	// if !strings.Contains(registerRequest.Email, "@") {
-	// 	logger.Warn("[USER] Invalid email address")
-	// 	r.Message = "Invalid email address"
-	// 	c.JSON(http.StatusBadRequest, r)
-	// 	return
-	// }
-
 	// Register the user
 	err = register(registerRequest)
 	if err != nil {
 		r.Message = err.Error()
 		if r.Message == "username already exists" {
+			c.JSON(http.StatusBadRequest, r)
+			return
+		}
+		if r.Message == "invalid email address" {
 			c.JSON(http.StatusBadRequest, r)
 			return
 		}
@@ -67,6 +68,50 @@ func Register(c *gin.Context) {
 	r.Status = true
 	// r.Data = response.RegisterResponse{username: registerRequest.username, password: registerRequest.password}
 	c.JSON(http.StatusCreated, r)
+}
+
+func Login(c *gin.Context) {
+	var err error
+
+	// Create response
+	r := response.New()
+
+	// Parse request body to JSON format
+	var loginRequest loginRequest
+	if err = c.ShouldBindJSON(&loginRequest); err != nil {
+		logger.Warn("[USER] " + err.Error())
+		r.Message = err.Error()
+		c.JSON(http.StatusBadRequest, r)
+		return
+	}
+
+	// Login the user
+	UUID, err := login(loginRequest)
+	if err != nil {
+		r.Message = err.Error()
+		if r.Message == "user not found" {
+			c.JSON(http.StatusNotFound, r)
+			return
+		} else if r.Message == "incorrect password" {
+			c.JSON(http.StatusUnauthorized, r)
+			return
+		}
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	// Generate token
+	token, err := auth.GenerateToken(UUID, loginRequest.Username)
+	if err != nil {
+		r.Message = err.Error()
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	// return UUID with formatted response
+	r.Status = true
+	r.Data = response.LoginResponse{UUID: UUID, Token: token}
+	c.JSON(http.StatusOK, r)
 }
 
 // func Get(c *gin.Context) {
@@ -142,46 +187,4 @@ func Register(c *gin.Context) {
 // 	c.JSON(http.StatusOK, r)
 // }
 
-// func Login(c *gin.Context) {
-// 	var err error
 
-// 	// Create response
-// 	r := response.New()
-
-// 	// Parse request body to JSON format
-// 	var loginRequest loginRequest
-// 	if err = c.ShouldBindJSON(&loginRequest); err != nil {
-// 		logger.Warn("[USER] " + err.Error())
-// 		r.Message = err.Error()
-// 		c.JSON(http.StatusBadRequest, r)
-// 		return
-// 	}
-
-// 	// Login the user
-// 	UUID, err := login(loginRequest)
-// 	if err != nil {
-// 		r.Message = err.Error()
-// 		if r.Message == "user not found" {
-// 			c.JSON(http.StatusNotFound, r)
-// 			return
-// 		} else if r.Message == "incorrect password" {
-// 			c.JSON(http.StatusUnauthorized, r)
-// 			return
-// 		}
-// 		c.JSON(http.StatusInternalServerError, r)
-// 		return
-// 	}
-
-// 	// Generate token
-// 	token, err := auth.GenerateToken(UUID, loginRequest.Email)
-// 	if err != nil {
-// 		r.Message = err.Error()
-// 		c.JSON(http.StatusInternalServerError, r)
-// 		return
-// 	}
-
-// 	// return UUID with formatted response
-// 	r.Status = true
-// 	r.Data = response.LoginResponse{UUID: UUID, Token: token}
-// 	c.JSON(http.StatusOK, r)
-// }

@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS djangoDB;
-USE djangoDB;
+CREATE DATABASE IF NOT EXISTS GuangShunCoinAction;
+USE GuangShunCoinAction;
 
 -- CREATE DATABASE `djangoDB`;
 -- CREATE USER 'user' IDENTIFIED BY 'password';
@@ -11,9 +11,8 @@ USE djangoDB;
 -- FLUSH PRIVILEGES;
 
 CREATE TABLE IF NOT EXISTS User (
-    user_id INT AUTO_INCREMENT PRIMARY KEY,
-    account VARCHAR(36) UNIQUE,
-	username VARCHAR(36),
+    user_id VARCHAR(36) PRIMARY KEY,
+	username VARCHAR(36) NOT NULL,
     password VARCHAR(60) NOT NULL,
     cellphone VARCHAR(20),
     fb_account VARCHAR(100),

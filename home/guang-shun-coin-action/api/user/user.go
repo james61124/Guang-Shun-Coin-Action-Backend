@@ -4,25 +4,31 @@ import (
 	"Guang_Shun_Coin_Action/pkg/logger"
 	"Guang_Shun_Coin_Action/pkg/mariadb"
 	"errors"
+	"strings"
 
-	// "github.com/google/uuid"
-	// "golang.org/x/crypto/bcrypt"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	username     string `json:"username"`
-	password    string `json:"password"`
+	UserID string `json:"UserID"`
+	Username string `json:"Username"`
+	Password string `json:"Password"`
+	Cellphone string `json:"Cellphone"`
+	FbAccount string `json:"FbAccount"`
+	Email string `json:"Email"`
+	Address string `json:"Address"`
 }
 
-// func hashPassword(password string) (string, error) {
-// 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-// 	return string(bytes), err
-// }
+func hashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
 
-// func checkPasswordHash(password, hash string) bool {
-// 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-// 	return err == nil
-// }
+func checkPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
 
 func register(rr registerRequest) (error) {
 	var query, username string
@@ -30,43 +36,65 @@ func register(rr registerRequest) (error) {
 
 	// Check if user already exists
 	query = "SELECT username FROM `User` WHERE username = ?"
-	err = mariadb.DB.QueryRow(query, rr.username).Scan(&username)
+	err = mariadb.DB.QueryRow(query, rr.Username).Scan(&username)
 	if err != nil && err.Error() != "sql: no rows in result set" {
 		logger.Error("[USER] " + err.Error())
 		return err
 	} else if username != "" {
-		logger.Warn("[USER] username:" + rr.username + " already exists")
+		logger.Warn("[USER] username:" + rr.Username + " already exists")
 		return errors.New("username already exists")
 	}
 
-	// // Generate UUID
-	// UUID = uuid.NewString()
+	// Check pass in fields (Email has @ symbol)
+	if !strings.Contains(rr.Email, "@") {
+		logger.Warn("[USER] Invalid email address")
+		return errors.New("invalid email address")
+	}
 
-	// // Hash password
-	// if rr.Password, err = hashPassword(rr.Password); err != nil {
-	// 	logger.Error("[USER] " + err.Error())
-	// 	return "", err
-	// }
+	// Hash password
+	if rr.Password, err = hashPassword(rr.Password); err != nil {
+		logger.Error("[USER] " + err.Error())
+		return err
+	}
 
 	// Insert into user database
-	query = "INSERT INTO User (username, password) VALUES (?, ?)"
-	_, err = mariadb.DB.Exec(query, rr.username, rr.password)
+	query = "INSERT INTO User (user_id, username, password, cellphone, fb_account, email, address) VALUES (?, ?, ?, ?, ?, ?, ?)"
+	_, err = mariadb.DB.Exec(query, uuid.NewString(), rr.Username, rr.Password, rr.Cellphone, rr.FbAccount, rr.Email, rr.Address)
 	if err != nil {
 		logger.Error("[USER] " + err.Error())
 		return err
 	}
 
-	// // Insert into user_info database
-	// query = "INSERT INTO User_Info (UUID, Username, Is_Pro) VALUES (?, ?, ?)"
-	// _, err = mariadb.DB.Exec(query, UUID, rr.Username, false)
-	// if err != nil {
-	// 	logger.Error("[USER] " + err.Error())
-	// 	return "", err
-	// }
-
-	logger.Info("[USER] Successfully registered user with username: " + rr.username)
+	logger.Info("[USER] Successfully registered user with username: " + rr.Username)
 
 	return nil
+}
+
+func login(lr loginRequest) (string, error) {
+	var query, UUID, password string
+	var err error
+
+	// Get user password
+	query = "SELECT user_id, password FROM User WHERE username = ?"
+	err = mariadb.DB.QueryRow(query, lr.Username).Scan(&UUID, &password)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			logger.Warn("[USER] Username: " + lr.Username + " not found")
+			return "", errors.New("user not found")
+		}
+		logger.Error("[USER] " + err.Error())
+		return "", err
+	}
+
+	// Check if password is correct
+	if !checkPasswordHash(lr.Password, password) {
+		logger.Warn("[USER] Incorrect password for Username: " + lr.Username)
+		return "", errors.New("incorrect password")
+	}
+
+	logger.Info("[USER] Successfully logged in user with Username: " + lr.Username)
+
+	return UUID, nil
 }
 
 // func get(UUID string) (UserInfo, error) {
@@ -133,29 +161,4 @@ func register(rr registerRequest) (error) {
 // 	return nil
 // }
 
-// func login(lr loginRequest) (string, error) {
-// 	var query, UUID, password string
-// 	var err error
 
-// 	// Get user password
-// 	query = "SELECT UUID, Password FROM User WHERE Email = ?"
-// 	err = mariadb.DB.QueryRow(query, lr.Email).Scan(&UUID, &password)
-// 	if err != nil {
-// 		if err.Error() == "sql: no rows in result set" {
-// 			logger.Warn("[USER] Email: " + lr.Email + " not found")
-// 			return "", errors.New("user not found")
-// 		}
-// 		logger.Error("[USER] " + err.Error())
-// 		return "", err
-// 	}
-
-// 	// Check if password is correct
-// 	if !checkPasswordHash(lr.Password, password) {
-// 		logger.Warn("[USER] Incorrect password for Email: " + lr.Email)
-// 		return "", errors.New("incorrect password")
-// 	}
-
-// 	logger.Info("[USER] Successfully logged in user with email: " + lr.Email)
-
-// 	return UUID, nil
-// }
