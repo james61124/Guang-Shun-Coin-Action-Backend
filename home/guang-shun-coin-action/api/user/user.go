@@ -5,20 +5,20 @@ import (
 	"Guang_Shun_Coin_Action/pkg/mariadb"
 	"errors"
 	"strings"
-
+	// "regexp"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct {
-	UserID string `json:"UserID"`
-	Username string `json:"Username"`
-	Password string `json:"Password"`
-	Cellphone string `json:"Cellphone"`
-	FbAccount string `json:"FbAccount"`
-	Email string `json:"Email"`
-	Address string `json:"Address"`
-}
+// type User struct {
+// 	UserID string `json:"UserID"`
+// 	Username string `json:"Username"`
+// 	Password string `json:"Password"`
+// 	Cellphone string `json:"Cellphone"`
+// 	FbAccount string `json:"FbAccount"`
+// 	Email string `json:"Email"`
+// 	Address string `json:"Address"`
+// }
 
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
@@ -45,11 +45,23 @@ func register(rr registerRequest) (error) {
 		return errors.New("username already exists")
 	}
 
-	// Check pass in fields (Email has @ symbol)
+	// Check pass in email field (Email has @ symbol)
 	if !strings.Contains(rr.Email, "@") {
 		logger.Warn("[USER] Invalid email address")
 		return errors.New("invalid email address")
 	}
+
+	// Check pass in phone field (phone number: start with 09 and 10 numbers in total)
+    // pattern := `^09\d{8}$`
+    // regex, err := regexp.Compile(pattern)
+    // if err != nil {
+    //     logger.Error("[USER] Error compiling regex:" + rr.Cellphone)
+    //     return err
+    // }
+    // if !regex.MatchString(rr.Cellphone) {
+    //     logger.Warn("[USER] Invalid phone number format")
+    //     return errors.New("invalid phone number format")
+    // }
 
 	// Hash password
 	if rr.Password, err = hashPassword(rr.Password); err != nil {
@@ -58,8 +70,10 @@ func register(rr registerRequest) (error) {
 	}
 
 	// Insert into user database
-	query = "INSERT INTO User (user_id, username, password, cellphone, fb_account, email, address) VALUES (?, ?, ?, ?, ?, ?, ?)"
-	_, err = mariadb.DB.Exec(query, uuid.NewString(), rr.Username, rr.Password, rr.Cellphone, rr.FbAccount, rr.Email, rr.Address)
+	query = "INSERT INTO User (userId, username, passwd, realName, cellphone, fbAccount, email, postcode, shippingAddr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	// query = "INSERT INTO User (userId, username, password, cellphone, fbAccount, email, address) VALUES (?, ?, ?, ?, ?, ?, ?)"
+	_, err = mariadb.DB.Exec(query, uuid.NewString(), rr.Username, rr.Password, rr.RealName, rr.Cellphone, rr.FbAccount, rr.Email, rr.Postcode, rr.Address)
+	// _, err = mariadb.DB.Exec(query, uuid.NewString(), rr.Username, rr.Password, rr.Cellphone, rr.FbAccount, rr.Email, rr.Postcode, rr.Address)
 	if err != nil {
 		logger.Error("[USER] " + err.Error())
 		return err
@@ -75,7 +89,7 @@ func login(lr loginRequest) (string, error) {
 	var err error
 
 	// Get user password
-	query = "SELECT user_id, password FROM User WHERE username = ?"
+	query = "SELECT userId, passwd FROM User WHERE username = ?"
 	err = mariadb.DB.QueryRow(query, lr.Username).Scan(&UUID, &password)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {

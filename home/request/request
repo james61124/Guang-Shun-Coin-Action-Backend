@@ -1,3 +1,33 @@
-curl -X POST -H "Content-Type: application/json" -d '{"Username": "james", "Password": "jamespassword", "Email": "james51124@gmail.com", "FbAccount": "xxx" }' http://localhost:81/user/register
-
+<!-- user/login -->
 curl -X POST -H "Content-Type: application/json" -d '{"Username": "james", "Password": "jamespassword" }' http://localhost:81/user/login
+curl -X POST -H "Content-Type: application/json" -d '{"Username": "james", "Password": "wrongpassword" }' http://localhost:81/user/login
+
+curl -X POST -H "Content-Type: application/json" -d '{"Username": "nirowu", "Password": "rongpasswd" }' http://localhost:81/user/login
+
+<!-- user/register -->
+curl -X POST \
+-H "Content-Type: application/json" \
+-d '{
+    "Username": "nirowu",
+    "Password": "rongpasswd",
+    "Cellphone": "0912345678",
+    "FbAccount": "haha",
+    "Email": "rong@gmail.com",
+    "Address": "123 Main St",
+    "Postcode": "12345",
+    "RealName": "rong wu"
+}' \
+http://localhost:81/user/register
+
+<!-- user/product -->
+curl -X POST \
+     -H "Content-Type: application/json" \
+     -d '{
+          "page": "1",
+          "sort": "default",
+          "category": "world coin"
+}' \
+http://localhost:81/shop/product
+
+
+

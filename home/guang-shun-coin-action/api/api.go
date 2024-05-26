@@ -4,6 +4,7 @@ import (
 	// "Guang_Shun_Coin_Action/api/ledger"
 	// "Guang_Shun_Coin_Action/api/transaction"
 	"Guang_Shun_Coin_Action/api/user"
+	"Guang_Shun_Coin_Action/api/shop"
 	"Guang_Shun_Coin_Action/config"
 	"Guang_Shun_Coin_Action/internal/auth"
 	// "Guang_Shun_Coin_Action/internal/validator"
@@ -27,9 +28,26 @@ func Main() {
 	// Create gin router
 	r := gin.Default()
 
+	r.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // 允許的源
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE") // 允許的 HTTP 方法
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization") // 允許的請求標頭
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true") // 允許携帶身份驗證信息（例如 cookie）
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
+
+		c.Next()
+	})
+
 	// // Users (no token validation)
 	r.POST("/user/register", user.Register)
 	r.POST("/user/login", user.Login)
+	
+	// // Product
+	r.POST("/shop/product", shop.Product)
 
 	// // Auth middleware for all routes below
 	// r.Use(auth.ValidateToken)

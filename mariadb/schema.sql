@@ -11,18 +11,33 @@ USE GuangShunCoinAction;
 -- FLUSH PRIVILEGES;
 
 CREATE TABLE IF NOT EXISTS User (
-    user_id VARCHAR(36) PRIMARY KEY,
+    userId VARCHAR(36) PRIMARY KEY,
 	username VARCHAR(36) NOT NULL,
-    password VARCHAR(60) NOT NULL,
-    real_name VARCHAR(36),
+    passwd VARCHAR(60) NOT NULL,
+    realName VARCHAR(36),
     cellphone VARCHAR(20),
-    fb_account VARCHAR(100),
+    fbAccount VARCHAR(100),
     email VARCHAR(100),
-    postcode VARCHAR (36),
-    address VARCHAR(255)
+    postcode VARCHAR(36),
+    shippingAddr VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS Product (
-    user_id VARCHAR(36) ,
-	product_id PRIMARY KEY;
+	productId INT PRIMARY KEY AUTO_INCREMENT,
+    productName VARCHAR(36) NOT NULL,
+    category VARCHAR(36),
+    price DECIMAL,
+    minBidPrice DECIMAL,
+    imgUrl VARCHAR(255), 
+    createAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    endedAt TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS TrackingList (
+    userId VARCHAR(36),
+    productId VARCHAR(36),
+    trackedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (userId, productId),
+    FOREIGN KEY (userId) REFERENCES User(userId) ON DELETE CASCADE,
+    FOREIGN KEY (productId) REFERENCES Product(productId) ON DELETE CASCADE
 );

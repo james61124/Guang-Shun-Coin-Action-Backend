@@ -12,17 +12,19 @@ import (
 )
 
 type registerRequest struct {
-	UserID string `json:"UserID"`
-	Username string `json:"Username" binding:"required"`
-	Password string `json:"Password" binding:"required"`
+	UserID    string `json:"UserID"`
+	Username  string `json:"Username" binding:"required"`
+	Password  string `json:"Password" binding:"required"`
 	Cellphone string `json:"Cellphone"`
 	FbAccount string `json:"FbAccount"`
-	Email string `json:"Email"`
-	Address string `json:"Address"`
+	Email     string `json:"Email"`
+	Address   string `json:"Address"`
+	Postcode  string `json:"Postcode"`
+	RealName  string `json:"RealName"`
 }
 
 type loginRequest struct {
-	Username    string `json:"Username" binding:"required"`
+	Username string `json:"Username" binding:"required"`
 	Password string `json:"Password" binding:"required"`
 }
 

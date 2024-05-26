@@ -38,6 +38,8 @@ services:
     volumes:
       # - ./api/logs:/app/logs
       - ./home:/home
+    working_dir:
+      /home/guang-shun-coin-action/cmd/api
     depends_on:
       mariadb:
         condition: service_healthy
