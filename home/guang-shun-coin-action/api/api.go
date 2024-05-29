@@ -5,6 +5,7 @@ import (
 	// "Guang_Shun_Coin_Action/api/transaction"
 	"Guang_Shun_Coin_Action/api/user"
 	"Guang_Shun_Coin_Action/api/shop"
+	"Guang_Shun_Coin_Action/api/member"
 	"Guang_Shun_Coin_Action/config"
 	"Guang_Shun_Coin_Action/internal/auth"
 	// "Guang_Shun_Coin_Action/internal/validator"
@@ -48,6 +49,9 @@ func Main() {
 	
 	// // Product
 	r.POST("/shop/product", shop.Product)
+
+	// Member
+	r.POST("/member/addProduct", member.AddProduct)
 
 	// // Auth middleware for all routes below
 	// r.Use(auth.ValidateToken)
