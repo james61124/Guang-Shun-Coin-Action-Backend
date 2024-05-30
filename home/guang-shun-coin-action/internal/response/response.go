@@ -31,10 +31,9 @@ type ProductResponse struct {
 	EndedAt     time.Time `json:"endedAt"`
 }
 
-type ProductRespnseList struct {
-	ProductInfo []ProductRespnseList `json: productInfo`
-}
-
+// type ProductRespnseList struct {
+// 	ProductResponse []ProductRespnseList `json: productInfo`
+// }
 
 type ULIDResponse struct {
 	ULID string `json:"ULID"`

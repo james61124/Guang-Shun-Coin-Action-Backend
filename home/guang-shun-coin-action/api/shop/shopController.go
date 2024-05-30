@@ -40,7 +40,7 @@ func Product(c *gin.Context) {
 		return
 	}
 
-
+	
 	r.Status = true
 	r.Data = ProductResponse
 	c.JSON(http.StatusCreated, r)

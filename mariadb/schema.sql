@@ -29,9 +29,12 @@ CREATE TABLE IF NOT EXISTS Product (
     price DECIMAL,
     minBidPrice DECIMAL,
     imgUrl VARCHAR(255), 
-    createAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    endedAt TIMESTAMP
+    createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    startTime TIMESTAMP,
+    endedTime TIMESTAMP
+    shippingStatus VARCHAR(36),
 );
+
 
 CREATE TABLE IF NOT EXISTS TrackingList (
     userId VARCHAR(36),

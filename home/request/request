@@ -23,7 +23,7 @@ http://localhost:81/user/register
 curl -X POST \
      -H "Content-Type: application/json" \
      -d '{
-          "page": "1",
+          "page": 1,
           "sort": "default",
           "category": "world coin"
 }' \
