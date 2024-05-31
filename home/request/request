@@ -15,11 +15,12 @@ curl -X POST \
     "Email": "rong@gmail.com",
     "Address": "123 Main St",
     "Postcode": "12345",
-    "RealName": "rong wu"
+    "RealName": "rong wu",
+    "NickName": "rong"
 }' \
 http://localhost:81/user/register
 
-<!-- user/product -->
+<!-- shop/product -->
 curl -X POST \
      -H "Content-Type: application/json" \
      -d '{
@@ -30,4 +31,4 @@ curl -X POST \
 http://localhost:81/shop/product
 
 
-
+<!-- member/AddProduct -->

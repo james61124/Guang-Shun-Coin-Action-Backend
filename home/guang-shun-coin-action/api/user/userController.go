@@ -21,6 +21,7 @@ type registerRequest struct {
 	Address   string `json:"Address"`
 	Postcode  string `json:"Postcode"`
 	RealName  string `json:"RealName"`
+	NickName  string `json:"NickName"`
 }
 
 type loginRequest struct {
