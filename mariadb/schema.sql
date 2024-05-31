@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS User (
     postcode VARCHAR(36),
     shippingAddr VARCHAR(255) NOT NULL,
     userRole VARCHAR(36) NOT NULL,
+    loginStatus VARCHAR(36) NOT NULL,
     nickName VARCHAR(36) NOT NULL
 );
 
@@ -63,22 +64,22 @@ CREATE TABLE IF NOT EXISTS Product (
     startAt TIMESTAMP NOT NULL,
     shippingStatus VARCHAR(36) NOT NULL,
     productDescription VARCHAR(255) NOT NULL,
-    FOREIGN KEY (userId) REFERENCES `user`(userId) ON DELETE CASCADE
+    FOREIGN KEY (userId) REFERENCES `User` (userId) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS ProductImage (
     imageId VARCHAR(36) PRIMARY KEY NOT NULL,
     productId VARCHAR(36) NOT NULL,
     imageUrl VARCHAR(255) NOT NULL,
-    FOREIGN KEY (productId) REFERENCES `product`(productId) ON DELETE CASCADE
+    FOREIGN KEY (productId) REFERENCES `Product` (productId) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS TrackingList (
     trackingId VARCHAR(36) PRIMARY KEY NOT NULL,
     userId VARCHAR(36) NOT NULL,
     productId VARCHAR(36) NOT NULL,
-    FOREIGN KEY (userId) REFERENCES `user`(userId) ON DELETE CASCADE,
-    FOREIGN KEY (productId) REFERENCES `product`(productId) ON DELETE CASCADE
+    FOREIGN KEY (userId) REFERENCES `User`(userId) ON DELETE CASCADE,
+    FOREIGN KEY (productId) REFERENCES `Product`(productId) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS History (
@@ -88,8 +89,8 @@ CREATE TABLE IF NOT EXISTS History (
     bidPrice BIGINT NOT NULL,
     bidTime TIMESTAMP NOT NULL,
     status VARCHAR(36),
-    FOREIGN KEY (productId) REFERENCES `product`(productId) ON DELETE CASCADE,
-    FOREIGN KEY (userId) REFERENCES `user`(userId) ON DELETE CASCADE
+    FOREIGN KEY (productId) REFERENCES `Product`(productId) ON DELETE CASCADE,
+    FOREIGN KEY (userId) REFERENCES `User`(userId) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS CustomService (
@@ -97,5 +98,5 @@ CREATE TABLE IF NOT EXISTS CustomService (
     userId VARCHAR(36) NOT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     content LONGTEXT NOT NULL,
-    FOREIGN KEY (userId) REFERENCES `user`(userId) ON DELETE CASCADE
+    FOREIGN KEY (userId) REFERENCES `User`(userId) ON DELETE CASCADE
 );
