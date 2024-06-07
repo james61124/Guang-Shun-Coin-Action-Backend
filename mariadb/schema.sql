@@ -10,17 +10,6 @@ USE GuangShunCoinAction;
 -- GRANT ALL PRIVILEGES ON djangoDB.* TO 'user'@'*';
 -- FLUSH PRIVILEGES;
 
--- CREATE TABLE IF NOT EXISTS User (
---     userId VARCHAR(36) PRIMARY KEY,
--- 	username VARCHAR(36) NOT NULL,
---     passwd VARCHAR(60) NOT NULL,
---     realName VARCHAR(36),
---     cellphone VARCHAR(20),
---     fbAccount VARCHAR(100),
---     email VARCHAR(100),
---     postcode VARCHAR(36),
---     shippingAddr VARCHAR(255)
--- );
 
 -- CREATE TABLE IF NOT EXISTS Product (
 -- 	productId VARCHAR PRIMARY KEY,
@@ -34,7 +23,6 @@ USE GuangShunCoinAction;
 --     endedTime TIMESTAMP
 --     shippingStatus VARCHAR(36),
 -- );
-
 
 
 CREATE TABLE IF NOT EXISTS User (

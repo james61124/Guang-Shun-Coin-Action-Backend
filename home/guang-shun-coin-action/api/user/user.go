@@ -104,8 +104,6 @@ func register(rr registerRequest) error {
 		loginStatus[0],
 		rr.NickName,
 	)
-	// query = "INSERT INTO User (userId, username, userPasswd, realName, cellphone, fbAccount, email, postcode, shippingAddr, userRole, loginStatus, nickName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-	// _, err = mariadb.DB.Exec(query, uuid.NewString(), rr.Username, rr.Password, rr.RealName, rr.Cellphone, rr.FbAccount, rr.Email, rr.Postcode, rr.Address, userRole[0], loginStatus[0], rr.NickName)
 	if err != nil {
 		logger.Error("[USER] " + err.Error())
 		return err
