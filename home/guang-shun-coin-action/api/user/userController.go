@@ -13,8 +13,9 @@ import (
 
 type registerRequest struct {
 	UserID    string `json:"UserID"`
-	Username  string `json:"Username" binding:"required"`
-	Password  string `json:"Password" binding:"required"`
+	Username  string `json:"Username"`
+	Password  string `json:"Password"`
+	PasswordConfirm  string `json:"PasswordConfirm"`
 	Cellphone string `json:"Cellphone"`
 	FbAccount string `json:"FbAccount"`
 	Email     string `json:"Email"`
@@ -28,13 +29,6 @@ type loginRequest struct {
 	Username string `json:"Username" binding:"required"`
 	Password string `json:"Password" binding:"required"`
 }
-
-// type updateRequest struct {
-// 	UUID     string `json:"UUID" binding:"required"`
-// 	Username string `json:"Username" binding:"required"`
-// 	Email    string `json:"Email" binding:"required"`
-// 	Is_Pro   bool   `json:"Is_Pro"`
-// }
 
 func Register(c *gin.Context) {
 	var err error
@@ -55,12 +49,24 @@ func Register(c *gin.Context) {
 	err = register(registerRequest)
 	if err != nil {
 		r.Message = err.Error()
-		if r.Message == "username already exists" {
-			c.JSON(http.StatusBadRequest, r)
+		if r.Message == "username is empty" || r.Message == "password is empty" {
+			c.JSON(http.StatusOK, r)
 			return
 		}
-		if r.Message == "invalid email address" {
-			c.JSON(http.StatusBadRequest, r)
+		if r.Message == "passwordConfirm is empty" || r.Message == "address is empty" {
+			c.JSON(http.StatusOK, r)
+			return
+		}
+		if r.Message == "cellphone is empty" || r.Message == "username already exists" {
+			c.JSON(http.StatusOK, r)
+			return
+		}
+		if r.Message == "invalid email address" || r.Message == "invalid phone number format" {
+			c.JSON(http.StatusOK, r)
+			return
+		}
+		if r.Message == "password and passwordConfirm is different" || r.Message == "invalid password format" {
+			c.JSON(http.StatusOK, r)
 			return
 		}
 		c.JSON(http.StatusInternalServerError, r)
@@ -69,8 +75,7 @@ func Register(c *gin.Context) {
 
 	// return UUID with formatted response
 	r.Status = true
-	// r.Data = response.RegisterResponse{username: registerRequest.username, password: registerRequest.password}
-	c.JSON(http.StatusCreated, r)
+	c.JSON(http.StatusOK, r)
 }
 
 func Login(c *gin.Context) {

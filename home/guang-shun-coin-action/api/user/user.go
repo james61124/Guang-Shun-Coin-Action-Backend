@@ -5,21 +5,10 @@ import (
 	"Guang_Shun_Coin_Action/pkg/mariadb"
 	"errors"
 	"strings"
-
-	// "regexp"
+	"regexp"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// type User struct {
-// 	UserID string `json:"UserID"`
-// 	Username string `json:"Username"`
-// 	Password string `json:"Password"`
-// 	Cellphone string `json:"Cellphone"`
-// 	FbAccount string `json:"FbAccount"`
-// 	Email string `json:"Email"`
-// 	Address string `json:"Address"`
-// }
 
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
@@ -35,6 +24,12 @@ func register(rr registerRequest) error {
 	var query, username string
 	var err error
 
+	// Check whether username is empty
+	if rr.Username == "" {
+		logger.Warn("[USER] username is empty")
+		return errors.New("username is empty")
+	}
+
 	// Check if user already exists
 	query = "SELECT username FROM `User` WHERE username = ?"
 	err = mariadb.DB.QueryRow(query, rr.Username).Scan(&username)
@@ -46,23 +41,82 @@ func register(rr registerRequest) error {
 		return errors.New("username already exists")
 	}
 
+	// Check whether address is empty
+	if rr.Address == "" {
+		logger.Warn("[USER] address is empty")
+		return errors.New("address is empty")
+	}
+
+	// Check whether cellphone is empty
+	if rr.Cellphone == "" {
+		logger.Warn("[USER] cellphone is empty")
+		return errors.New("cellphone is empty")
+	}
+
+	// Check whether password is empty
+	if rr.Password == "" {
+		logger.Warn("[USER] password is empty")
+		return errors.New("password is empty")
+	}
+
 	// Check pass in email field (Email has @ symbol)
-	if !strings.Contains(rr.Email, "@") {
+	if rr.Email != "" && !strings.Contains(rr.Email, "@") {
 		logger.Warn("[USER] Invalid email address")
 		return errors.New("invalid email address")
 	}
 
 	// Check pass in phone field (phone number: start with 09 and 10 numbers in total)
-	// pattern := `^09\d{8}$`
-	// regex, err := regexp.Compile(pattern)
-	// if err != nil {
-	//     logger.Error("[USER] Error compiling regex:" + rr.Cellphone)
-	//     return err
-	// }
-	// if !regex.MatchString(rr.Cellphone) {
-	//     logger.Warn("[USER] Invalid phone number format")
-	//     return errors.New("invalid phone number format")
-	// }
+	pattern := `^09\d{8}$`
+	regex, err := regexp.Compile(pattern)
+	if err != nil {
+	    logger.Error("[USER] Error compiling regex:" + rr.Cellphone)
+	    return err
+	}
+	if !regex.MatchString(rr.Cellphone) {
+	    logger.Warn("[USER] Invalid phone number format")
+	    return errors.New("invalid phone number format")
+	}
+
+	// Check if password contains uppercase letters, lowercase letters, and digits
+	lowercasePattern := `[a-z]`
+	uppercasePattern := `[A-Z]`
+	digitPattern := `\d`
+	lowercaseRegex, err := regexp.Compile(lowercasePattern)
+	if err != nil {
+	    logger.Error("[USER] Error compiling regex:" + rr.Password)
+	    return err
+	}
+	uppercaseRegex, err := regexp.Compile(uppercasePattern)
+	if err != nil {
+	    logger.Error("[USER] Error compiling regex:" + rr.Password)
+	    return err
+	}
+	digitRegex, err := regexp.Compile(digitPattern)
+	if err != nil {
+	    logger.Error("[USER] Error compiling regex:" + rr.Password)
+	    return err
+	}
+	if !lowercaseRegex.MatchString(rr.Password) {
+		return errors.New("invalid password format")
+	}
+	if !uppercaseRegex.MatchString(rr.Password) {
+		return errors.New("invalid password format")
+	}
+	if !digitRegex.MatchString(rr.Password) {
+		return errors.New("invalid password format")
+	}
+
+	// Check whether passwordConfirm is empty
+	if rr.PasswordConfirm == "" {
+		logger.Warn("[USER] passwordConfirm is empty")
+		return errors.New("passwordConfirm is empty")
+	}
+
+	// Check difference between password and passwordConfirm
+	if rr.Password != rr.PasswordConfirm {
+		logger.Warn("[USER] password and passwordConfirm is different")
+		return errors.New("password and passwordConfirm is different")
+	}
 
 	// Hash password
 	if rr.Password, err = hashPassword(rr.Password); err != nil {
