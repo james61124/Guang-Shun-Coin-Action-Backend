@@ -124,7 +124,7 @@ func login(lr loginRequest) (string, error) {
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			logger.Warn("[USER] Username: " + lr.Username + " not found")
-			return "", errors.New("user not found")
+			return "", errors.New("username not found")
 		}
 		logger.Error("[USER] " + err.Error())
 		return "", err
@@ -133,7 +133,7 @@ func login(lr loginRequest) (string, error) {
 	// Check if password is correct
 	if !checkPasswordHash(lr.Password, password) {
 		logger.Warn("[USER] Incorrect password for Username: " + lr.Username)
-		return "", errors.New("incorrect password")
+		return "", errors.New("incorrent password")
 	}
 
 	logger.Info("[USER] Successfully logged in user with Username: " + lr.Username)

@@ -84,7 +84,7 @@ func Login(c *gin.Context) {
 	if err = c.ShouldBindJSON(&loginRequest); err != nil {
 		logger.Warn("[USER] " + err.Error())
 		r.Message = err.Error()
-		c.JSON(http.StatusBadRequest, r)
+		c.JSON(http.StatusOK, r)
 		return
 	}
 
@@ -92,11 +92,8 @@ func Login(c *gin.Context) {
 	UUID, err := login(loginRequest)
 	if err != nil {
 		r.Message = err.Error()
-		if r.Message == "user not found" {
-			c.JSON(http.StatusNotFound, r)
-			return
-		} else if r.Message == "incorrect password" {
-			c.JSON(http.StatusUnauthorized, r)
+		if r.Message == "incorrent password" || r.Message == "username not found" {
+			c.JSON(http.StatusOK, r)
 			return
 		}
 		c.JSON(http.StatusInternalServerError, r)
@@ -111,7 +108,6 @@ func Login(c *gin.Context) {
 		return
 	}
 	
-
 	// return UUID with formatted response
 	r.Status = true
 	r.Data = response.LoginResponse{UUID: UUID, Token: token}
