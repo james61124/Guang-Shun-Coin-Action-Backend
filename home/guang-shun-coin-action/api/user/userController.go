@@ -110,6 +110,7 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, r)
 		return
 	}
+	
 
 	// return UUID with formatted response
 	r.Status = true

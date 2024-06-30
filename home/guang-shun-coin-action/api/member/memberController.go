@@ -2,10 +2,12 @@ package member
 
 import (
 	"Guang_Shun_Coin_Action/internal/response"
+	"Guang_Shun_Coin_Action/internal/auth"
 	"Guang_Shun_Coin_Action/pkg/logger"
 	"net/http"
 	"github.com/gin-gonic/gin"
 	"time"
+	// "fmt"
 )
 
 type addProductRequest struct {
@@ -15,6 +17,7 @@ type addProductRequest struct {
 	MinBidPrice int `json:"minBidPrice"`
 	StartDate time.Time `json:"startDate"`
 	EndDate     time.Time `json:"endDate"`
+	ProductDescription string `json:"productDescription"`
 }
 
 func AddProduct(c *gin.Context) {
@@ -32,8 +35,29 @@ func AddProduct(c *gin.Context) {
 		return
 	}
 
+	// fmt.Printf("add the auth validation\n")
+
+	// Validate token and set UUID in context (validation failed.)
+	auth.ValidateToken(c)
+
+	// Get UUID from context
+	uuid, exists := c.Get("UUID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "UUID not found from auth"})
+		return
+	}
+
+	// Type assert UUID to string
+	UUID, ok := uuid.(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "UUID not a string"})
+		return
+	}
+
+    // var UUID = "e85e507e-0b71-4ca2-8825-72429b41a222"
+
 	// Add product
-	err = addProduct(addProductRequest)
+	err = addProduct(addProductRequest, UUID)
 	if err != nil {
 		r.Message = err.Error()
 		c.JSON(http.StatusInternalServerError, r)

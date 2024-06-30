@@ -32,3 +32,15 @@ http://localhost:81/shop/product
 
 
 <!-- member/AddProduct -->
+curl -X POST \
+     -H "Content-Type: application/json" \
+     -d '{
+        "name": "product1",
+        "category": "american coin",
+        "price": 100,  
+        "minBidPrice": 123,
+        "startDate": "2024-06-30T12:00:00Z",  // 假設日期格式符合 ISO 8601 格式
+        "endDate": "2024-07-10T12:00:00Z",
+        "productDescription": "best!!"  
+}' \
+http://localhost:81/member/AddProduct

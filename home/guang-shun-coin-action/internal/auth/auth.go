@@ -4,6 +4,7 @@ import (
 	"Guang_Shun_Coin_Action/config"
 	"Guang_Shun_Coin_Action/internal/response"
 	"Guang_Shun_Coin_Action/pkg/logger"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -67,6 +68,10 @@ func ValidateToken(c *gin.Context) {
 	if err != nil {
 		var r = response.New()
 		if ve, ok := err.(*jwt.ValidationError); ok {
+
+			// testing error message: 1
+			fmt.Printf("%d", ve.Errors)
+
 			if ve.Errors & jwt.ValidationErrorMalformed != 0 {
 				r.Message = "token is not correctly formatted as a JWT (missing or invalid segments)"
 			} else if ve.Errors & jwt.ValidationErrorUnverifiable != 0{

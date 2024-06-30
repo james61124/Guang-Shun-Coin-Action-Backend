@@ -36,7 +36,7 @@ func register(rr registerRequest) error {
 	var err error
 
 	// Check if user already exists
-	query = ""
+	query = "SELECT username FROM `User` WHERE username = ?"
 	err = mariadb.DB.QueryRow(query, rr.Username).Scan(&username)
 	if err != nil && err.Error() != "sql: no rows in result set" {
 		logger.Error("[USER] " + err.Error())
@@ -110,20 +110,6 @@ func register(rr registerRequest) error {
 	}
 
 	logger.Info("[USER] Successfully registered user with username: " + rr.Username)
-
-	// userRole := []string{"buyer", "seller"}
-	// loginStatus := []string {"signIn", "signOut"}
-
-	// // Insert into user database
-
-	// query = "INSERT INTO User (userId, username, userPasswd, realName, cellphone, fbAccount, email, postcode, shippingAddr, userRole, loginStatus, nickName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-	// _, err = mariadb.DB.Exec(query, uuid.NewString(), rr.Username, rr.Password, rr.RealName, rr.Cellphone, rr.FbAccount, rr.Email, rr.Postcode, rr.Address, userRole[0], loginStatus[0], rr.NickName)
-	// if err != nil {
-	// 	logger.Error("[USER] " + err.Error())
-	// 	return err
-	// }
-
-	// logger.Info("[USER] Successfully registered user with username: " + rr.Username)
 
 	return nil
 }
