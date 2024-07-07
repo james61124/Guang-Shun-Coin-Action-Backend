@@ -54,7 +54,7 @@ func ValidateToken(c *gin.Context) {
 		r := response.New()
 		r.Message = "Authorization header is missing"
 		logger.Warn("[AUTH] Received request without Bearer authorization header")
-		c.JSON(http.StatusUnauthorized, r)
+		c.JSON(http.StatusOK, r)
 		c.Abort()
 		return
 	}

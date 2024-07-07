@@ -17,11 +17,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
 	"github.com/gin-gonic/gin"
 )
 
 func Main() {
+
 	// Init API
 	apiInit()
 	Quit := make(chan os.Signal, 1)
@@ -30,10 +30,10 @@ func Main() {
 	r := gin.Default()
 
 	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // 允許的源
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE") // 允許的 HTTP 方法
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization") // 允許的請求標頭
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true") // 允許携帶身份驗證信息（例如 cookie）
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // Allowed origin
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE") // Allowed HTTP methods
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization") // Allowed request headers
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true") // Allow credentials (e.g., cookies)
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusOK)
@@ -42,6 +42,8 @@ func Main() {
 
 		c.Next()
 	})
+
+	r.StaticFS("/assets",http.Dir("./assets"))
 
 	// // Users (no token validation)
 	r.POST("/user/register", user.Register)

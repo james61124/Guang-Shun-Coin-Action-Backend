@@ -20,6 +20,10 @@ type LoginResponse struct {
 	Token string `json:"Token"`
 }
 
+type AddProductResponse struct {
+	ProductId  string `json:"productId"`
+}
+
 type ProductResponse struct {
 	ProductId   string    `json:"productId"`
 	ProductName string    `json:"productName"`
@@ -27,7 +31,7 @@ type ProductResponse struct {
 	Price       float64   `json:"price"`
 	MinBidPrice float64   `json:"minBidPrice"`
 	ImgUrl      string    `json:"imgUrl"`
-	CreateAt    time.Time `json:"createAt"`
+	StartAt    time.Time `json:"createAt"`
 	EndedAt     time.Time `json:"endedAt"`
 }
 

@@ -1,6 +1,6 @@
 import requests
 
-url = "http://localhost:81/assets/track.png"
+url = "http://localhost:8000/submit/"
 
 response = requests.get(url)
 
