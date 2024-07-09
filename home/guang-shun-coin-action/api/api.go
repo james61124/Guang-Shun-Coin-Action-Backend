@@ -54,6 +54,7 @@ func Main() {
 
 	// Member
 	r.POST("/member/addProduct", member.AddProduct)
+	r.POST("/member/addImage", member.AddImage)
 
 	// // Auth middleware for all routes below
 	// r.Use(auth.ValidateToken)

@@ -5,6 +5,12 @@ import (
 	"Guang_Shun_Coin_Action/pkg/mariadb"
 	"github.com/google/uuid"
 	"errors"
+	"io"
+    "mime/multipart"
+    "os"
+	"fmt"
+	"path/filepath"
+	"net/http"
 )
 
 func addProduct(rr addProductRequest, ownerUUID string) (string, error) {
@@ -63,33 +69,116 @@ func addProduct(rr addProductRequest, ownerUUID string) (string, error) {
 	return productID, nil
 }
 
-// func addImage(c *gin.Context, ownerUUID string) error {
-// 	var query string
-// 	var err error
+func addImage(files []*multipart.FileHeader, productID string) error {
 
-// 	// check the extended file name
-// 	allowedExtensions := map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".gif": true}
-// 	fileExt := filepath.Ext(file.Filename)
-// 	if !allowedExtensions[fileExt] {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "File type not allowed"})
-// 		return
-// 	}
+	var imageID string
 
-// 	// check file path exists
-// 	uploadPath := "./uploads"
-// 	if _, err := os.Stat(uploadPath); os.IsNotExist(err) {
-// 		os.Mkdir(uploadPath, os.ModePerm)
-// 	}
+	// Create the directory to save the uploaded files
+    uploadDir := "./assets"
+    if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		logger.Error("[Member] Unable to create assets directory")
+        return err
+    }
 
-// 	// 保存文件
-// 	filePath := filepath.Join(uploadPath, file.Filename)
-// 	if err := c.SaveUploadedFile(file, filePath); err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save the file"})
-// 		return
-// 	}
+    for _, file := range files {
 
-// 	c.JSON(http.StatusOK, gin.H{"message": "File uploaded successfully", "file_path": filePath})
-// 	logger.Info("[Product] Successfully add product with productname: " + rr.Name)
+		imageID = uuid.NewString()
+		var imageUrl = "/assets/" + imageID
+		// fmt.Println(file)
 
-// 	return nil
-// }
+        // Check if the file size exceeds the limit (10 MB)
+        if file.Size > 10*1024*1024 { // 10 MB
+			logger.Error("[Member] File exceeds 10MB")
+            return errors.New("File exceeds 10MB")
+        }
+
+        // Open the uploaded file
+        src, err := file.Open()
+        if err != nil {
+			logger.Error("[Member] Unable to open file")
+        	return err
+        }
+        // defer src.Close()
+
+        // Check the file type
+        if err := checkFileType(src); err != nil {
+			logger.Error("[Member] Invalid file type")
+            return errors.New("Invalid file type")
+        }
+
+        // Prefix the filename with "<imageID>" and then the original filename
+        newFilename := fmt.Sprintf("%s", imageID)
+        dstPath := filepath.Join(uploadDir, newFilename)
+        dst, err := os.Create(dstPath)
+        if err != nil {
+			logger.Error("[Member] Unable to create file")
+        	return err
+        }
+        // defer dst.Close()
+
+        // Copy the file contents to the destination file
+        if _, err := io.Copy(dst, src); err != nil {
+			logger.Error("[Member] Unable to save file")
+        	return err
+        }
+
+		// Insert into database
+		query := `
+				INSERT INTO ProductImage (imageId, productId, imageUrl)
+				VALUES (?, ?, ?)
+				`
+		_, err = mariadb.DB.Exec(
+			query, 
+			imageID, 
+			productID,
+			imageUrl,
+		)
+	
+		if err != nil {
+			logger.Error("[Member] " + err.Error())
+			return err
+		}
+    }
+
+	logger.Info("[Member] Successfully add images")
+	return nil
+}
+
+// checkFileType checks if the uploaded file is an image.
+func checkFileType(file multipart.File) error {
+    // Convert file to io.ReadSeeker to support Seek method
+    readSeeker, ok := file.(io.ReadSeeker)
+    if !ok {
+		logger.Error("[Member] file does not support Seek")
+        return fmt.Errorf("file does not support Seek")
+    }
+
+    // Read the first 512 bytes of the file to determine the MIME type
+    buf := make([]byte, 512)
+    if _, err := readSeeker.Read(buf); err != nil && err != io.EOF {
+		logger.Error("[Member] " + err.Error())
+        return err
+    }
+    
+    // Reset the file read position
+    _, err := readSeeker.Seek(0, io.SeekStart)
+    if err != nil {
+		logger.Error("[Member] " + err.Error())
+        return err
+    }
+
+    // Check if the file type is an image
+    if !isImage(buf) {
+		logger.Error("[Product] Invalid file type")
+        return fmt.Errorf("Invalid file type")
+    }
+
+    return nil
+}
+
+// isImage determines if the file type is an image based on its MIME type.
+func isImage(buf []byte) bool {
+    mimeType := http.DetectContentType(buf)
+    return mimeType == "image/jpeg" || mimeType == "image/png" || mimeType == "image/gif"
+}
+
