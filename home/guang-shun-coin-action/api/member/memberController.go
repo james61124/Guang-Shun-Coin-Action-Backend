@@ -19,6 +19,11 @@ type addProductRequest struct {
 	ProductDescription string `json:"productDescription"`
 }
 
+type getHistoryBidRequest struct {
+	Sorting string `json:"sorting"`
+	Page int `json: page`
+}
+
 func AddProduct(c *gin.Context) {
 	var err error
 	var productID string
@@ -106,4 +111,58 @@ func AddImage(c *gin.Context) {
     // Return a success message
 	r.Status = true
     c.JSON(http.StatusOK, r)
+}
+
+func GetHistoryBid(c *gin.Context) {
+	var err error
+
+	// Create response
+	r := response.New()
+
+	// Validate token and set UUID in context (validation failed.)
+	UUID := auth.ValidateToken(c)
+
+	// Parse request body to JSON format
+	var getHistoryBidRequest getHistoryBidRequest
+	if err = c.ShouldBindJSON(&getHistoryBidRequest); err != nil {
+		logger.Warn("[Product] " + err.Error())
+		r.Message = err.Error()
+		c.JSON(http.StatusBadRequest, r)
+		return
+	}
+
+	// Add product
+	historyBidList, err := getHistoryBid(getHistoryBidRequest, UUID)
+	if err != nil {
+		r.Message = err.Error()
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	// return response
+	r.Status = true
+	r.Data = historyBidList
+	c.JSON(http.StatusOK, r)
+}
+
+func TotalPagesOfHistoryBid(c *gin.Context) {
+	var err error
+
+	// Create response
+	r := response.New()
+
+	// Validate token and set UUID in context (validation failed.)
+	UUID := auth.ValidateToken(c)
+
+	total, err := totalPagesOfHistoryBid(UUID)
+	if err != nil {
+		r.Message = err.Error()
+		logger.Warn("[SHOP] " + err.Error())
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	r.Status = true
+	r.Data = response.TotalPagesOfProductResponse{Total: total}
+	c.JSON(http.StatusOK, r)
 }

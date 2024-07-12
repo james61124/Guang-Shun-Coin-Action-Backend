@@ -65,7 +65,7 @@ func product(pr ProductRequest) ([]response.ProductResponse, error) {
 	return products, err
 }
 
-func totalProduct(pr TotalProductRequest) (int, error) {
+func totalPagesOfProduct(pr TotalPagesOfProductRequest) (int, error) {
 	var err error
 
     query := `SELECT COUNT(*) AS product_count FROM Product WHERE category = ?`
@@ -80,7 +80,7 @@ func totalProduct(pr TotalProductRequest) (int, error) {
 	total := fmt.Sprintf("%d", productCount / 12 + 1)
 	logger.Info("[SHOP] Successfully return total product number: " + total)
 	
-	return productCount, err
+	return productCount / 12 + 1, err
 }
 
 func detail(pr DetailRequest) (response.DetailResponse, error) {
@@ -129,8 +129,7 @@ func detail(pr DetailRequest) (response.DetailResponse, error) {
 	}
 
 	// get history record
-
-	query = "SELECT userId, bidPrice, bidTime FROM History WHERE productId = ? "
+	query = "SELECT userId, bidPrice, bidTime, status FROM History WHERE productId = ? "
 	rows, err = mariadb.DB.Query(query, pr.ProductID)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
@@ -145,7 +144,7 @@ func detail(pr DetailRequest) (response.DetailResponse, error) {
 		var history response.BidHistory
 		var userId, bidTime string
 
-		if err = rows.Scan(&userId, &history.BidPrice, &bidTime); err != nil {
+		if err = rows.Scan(&userId, &history.BidPrice, &bidTime, &history.Status); err != nil {
 			logger.Error("[SHOP] " + err.Error())
 			return product, err
 		}
@@ -237,13 +236,5 @@ func bid(pr BidRequest, UUID string) error {
     }
 
 	return nil
-
-	
-
-
-
-
-
-
 	
 }

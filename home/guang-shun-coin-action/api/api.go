@@ -51,13 +51,15 @@ func Main() {
 	
 	// // Product
 	r.POST("/shop/product", shop.Product)
-	r.POST("/shop/totalProduct", shop.TotalProduct)
+	r.POST("/shop/totalPagesOfProduct", shop.TotalPagesOfProduct)
 	r.POST("/shop/detail", shop.Detail)
 	r.POST("/shop/bid", shop.Bid)
 
 	// Member
 	r.POST("/member/addProduct", member.AddProduct)
 	r.POST("/member/addImage", member.AddImage)
+	r.POST("/member/getHistoryBid", member.GetHistoryBid)
+	r.POST("/member/totalPagesOfHistoryBid", member.TotalPagesOfHistoryBid)
 
 	// // Auth middleware for all routes below
 	// r.Use(auth.ValidateToken)

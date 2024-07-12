@@ -2,6 +2,7 @@ package response
 
 import (
 	"time"
+	"database/sql"
 )
 
 type Response struct {
@@ -35,7 +36,7 @@ type ProductResponse struct {
 	EndedAt     time.Time `json:"endedAt"`
 }
 
-type TotalProductResponse struct {
+type TotalPagesOfProductResponse struct {
 	Total   int    `json:"total"`
 }
 
@@ -43,6 +44,15 @@ type BidHistory struct {
 	Username string `json:"username"`
 	BidPrice float64 `json:"bidPrice"`
 	BidTime  time.Time `json:"bidTime"`
+	Status sql.NullString `json:"status"`
+}
+
+type GetBidHistory struct {
+	ProductName string `json:"productName"`
+	BidPrice float64 `json:"bidPrice"`
+	BidTime  time.Time `json:"bidTime"`
+	Status sql.NullString `json:"status"`
+	ImageUrl  sql.NullString  `json:"imageUrl"`
 }
 
 type DetailResponse struct {

@@ -3,6 +3,7 @@ package member
 import (
 	"Guang_Shun_Coin_Action/pkg/logger"
 	"Guang_Shun_Coin_Action/pkg/mariadb"
+	"Guang_Shun_Coin_Action/internal/response"
 	"github.com/google/uuid"
 	"errors"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"net/http"
+	"time"
 )
 
 func addProduct(rr addProductRequest, ownerUUID string) (string, error) {
@@ -180,5 +182,78 @@ func checkFileType(file multipart.File) error {
 func isImage(buf []byte) bool {
     mimeType := http.DetectContentType(buf)
     return mimeType == "image/jpeg" || mimeType == "image/png" || mimeType == "image/gif"
+}
+
+func getHistoryBid(rr getHistoryBidRequest, ownerUUID string) ([]response.GetBidHistory, error) {
+
+	// get history record
+	query := "SELECT productId, bidPrice, bidTime, status FROM History WHERE userId = ? LIMIT ? OFFSET ?"
+	productNums := 12
+	offset := (rr.Page - 1) * productNums
+	rows, err := mariadb.DB.Query(query, ownerUUID, productNums, offset)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			logger.Warn("[SHOP] No product is available currently.\n")
+		}
+		logger.Error("[SHOP] " + err.Error())
+	}
+	defer rows.Close()
+
+	var historyBidList []response.GetBidHistory
+	for rows.Next() {
+		
+		var historyBid response.GetBidHistory
+		var bidTime string
+		var productID string
+
+		if err = rows.Scan(&productID, &historyBid.BidPrice, &bidTime, &historyBid.Status); err != nil {
+			logger.Error("[SHOP] " + err.Error())
+			return historyBidList, err
+		}
+		historyBid.BidTime, err = time.Parse("2006-01-02 15:04:05", bidTime)
+		if err != nil {
+			logger.Error("[SHOP] " + err.Error())
+			return historyBidList, err
+		}
+
+		// get productName
+		query = `SELECT productName FROM Product WHERE productId = ?;`;
+		err := mariadb.DB.QueryRow(query, productID).Scan(&historyBid.ProductName)
+		if err != nil {
+			logger.Error("[SHOP] " + err.Error())
+			return historyBidList, err
+		}
+		
+		// get imageUrl
+		query = `SELECT imageUrl FROM ProductImage WHERE productId = ? ORDER BY seq LIMIT 1;`;
+		err = mariadb.DB.QueryRow(query, productID).Scan(&historyBid.ImageUrl)
+		if err != nil {
+			logger.Error("[SHOP] " + err.Error())
+			return historyBidList, err
+		}
+
+		historyBidList = append(historyBidList, historyBid)
+	}
+
+	logger.Info("[SHOP] Successfully get historyBidList")
+	return historyBidList, nil
+}
+
+func totalPagesOfHistoryBid(UUID string) (int, error) {
+	var err error
+
+    query := `SELECT COUNT(*) AS product_count FROM History WHERE userId = ?`
+
+    var productCount int
+    err = mariadb.DB.QueryRow(query, UUID).Scan(&productCount)
+    if err != nil {
+        logger.Error("[SHOP] " + err.Error())
+		return productCount, err
+    }
+
+	total := fmt.Sprintf("%d", productCount / 12 + 1)
+	logger.Info("[SHOP] Successfully return total pages of history bid: " + total)
+	
+	return productCount / 12 + 1, err
 }
 

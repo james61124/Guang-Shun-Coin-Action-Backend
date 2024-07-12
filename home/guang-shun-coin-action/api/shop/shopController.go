@@ -14,7 +14,7 @@ type ProductRequest struct {
     Category string `json:"category"`
 }
 
-type TotalProductRequest struct {
+type TotalPagesOfProductRequest struct {
     Category string `json:"category"`
 }
 
@@ -59,7 +59,7 @@ func Product(c *gin.Context) {
 	c.JSON(http.StatusOK, r)
 }
 
-func TotalProduct(c *gin.Context) {
+func TotalPagesOfProduct(c *gin.Context) {
 	var err error
 	var total int
 
@@ -70,15 +70,15 @@ func TotalProduct(c *gin.Context) {
 	auth.ValidateToken(c)
 
 	// Parse request body to JSON format
-	var totalProductRequest TotalProductRequest
-	if err = c.ShouldBindJSON(&totalProductRequest); err != nil {
+	var totalPagesOfProductRequest TotalPagesOfProductRequest
+	if err = c.ShouldBindJSON(&totalPagesOfProductRequest); err != nil {
 		logger.Warn("[SHOP] " + err.Error())
 		r.Message = err.Error()
 		c.JSON(http.StatusBadRequest, r)
 		return
 	}
 
-	total, err = totalProduct(totalProductRequest)
+	total, err = totalPagesOfProduct(totalPagesOfProductRequest)
 	if err != nil {
 		r.Message = err.Error()
 		logger.Warn("[SHOP] " + err.Error())
@@ -87,7 +87,7 @@ func TotalProduct(c *gin.Context) {
 	}
 
 	r.Status = true
-	r.Data = response.TotalProductResponse{Total: total}
+	r.Data = response.TotalPagesOfProductResponse{Total: total}
 	c.JSON(http.StatusOK, r)
 }
 
