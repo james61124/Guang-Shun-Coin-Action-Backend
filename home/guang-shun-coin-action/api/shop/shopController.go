@@ -1,12 +1,10 @@
 package shop
 
 import (
-	// "Guang_Shun_Coin_Action/internal/auth"
+	"Guang_Shun_Coin_Action/internal/auth"
 	"Guang_Shun_Coin_Action/internal/response"
 	"Guang_Shun_Coin_Action/pkg/logger"
 	"net/http"
-	// "regexp"
-	// "strings"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,12 +14,27 @@ type ProductRequest struct {
     Category string `json:"category"`
 }
 
+type TotalProductRequest struct {
+    Category string `json:"category"`
+}
+
+type DetailRequest struct {
+    ProductID string `json:"productID"`
+}
+
+type BidRequest struct {
+    ProductID string `json:"productID"`
+	BidPrice int `json:"bidPrice"`
+}
 
 func Product(c *gin.Context) {
 	var err error
 
 	// Create response
 	r := response.New()
+
+	// Validate token and set UUID in context (validation failed.)
+	auth.ValidateToken(c)
 
 	// Parse request body to JSON format
 	var productRequest ProductRequest
@@ -36,12 +49,109 @@ func Product(c *gin.Context) {
 	ProductResponse, err = product(productRequest)
 	if err != nil {
 		r.Message = err.Error()
+		logger.Warn("[SHOP] " + err.Error())
 		c.JSON(http.StatusInternalServerError, r)
 		return
 	}
 
-	
 	r.Status = true
 	r.Data = ProductResponse
-	c.JSON(http.StatusCreated, r)
+	c.JSON(http.StatusOK, r)
+}
+
+func TotalProduct(c *gin.Context) {
+	var err error
+	var total int
+
+	// Create response
+	r := response.New()
+
+	// Validate token and set UUID in context (validation failed.)
+	auth.ValidateToken(c)
+
+	// Parse request body to JSON format
+	var totalProductRequest TotalProductRequest
+	if err = c.ShouldBindJSON(&totalProductRequest); err != nil {
+		logger.Warn("[SHOP] " + err.Error())
+		r.Message = err.Error()
+		c.JSON(http.StatusBadRequest, r)
+		return
+	}
+
+	total, err = totalProduct(totalProductRequest)
+	if err != nil {
+		r.Message = err.Error()
+		logger.Warn("[SHOP] " + err.Error())
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	r.Status = true
+	r.Data = response.TotalProductResponse{Total: total}
+	c.JSON(http.StatusOK, r)
+}
+
+func Detail(c *gin.Context) {
+	var err error
+
+	// Create response
+	r := response.New()
+
+	// Validate token and set UUID in context (validation failed.)
+	auth.ValidateToken(c)
+
+	// Parse request body to JSON format
+	var detailRequest DetailRequest
+	if err = c.ShouldBindJSON(&detailRequest); err != nil {
+		logger.Warn("[SHOP] " + err.Error())
+		r.Message = err.Error()
+		c.JSON(http.StatusBadRequest, r)
+		return
+	}
+
+	detailInfo, err := detail(detailRequest)
+	if err != nil {
+		r.Message = err.Error()
+		logger.Warn("[SHOP] " + err.Error())
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	r.Status = true
+	r.Data = detailInfo
+	c.JSON(http.StatusOK, r)
+}
+
+func Bid(c *gin.Context) {
+	var err error
+
+	// Create response
+	r := response.New()
+
+	// Validate token and set UUID in context (validation failed.)
+	UUID := auth.ValidateToken(c)
+
+	// Parse request body to JSON format
+	var bidRequest BidRequest
+	if err = c.ShouldBindJSON(&bidRequest); err != nil {
+		logger.Warn("[SHOP] " + err.Error())
+		r.Message = err.Error()
+		c.JSON(http.StatusBadRequest, r)
+		return
+	}
+
+	err = bid(bidRequest, UUID)
+	if err != nil {
+		r.Message = err.Error()
+		if r.Message == "bidPrice is smaller or equal than highest bidPrice" {
+			c.JSON(http.StatusOK, r)
+			return
+		}
+		logger.Warn("[SHOP] " + err.Error())
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	r.Status = true
+	c.JSON(http.StatusOK, r)
 }

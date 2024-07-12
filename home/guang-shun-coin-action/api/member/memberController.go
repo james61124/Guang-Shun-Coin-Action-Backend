@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"github.com/gin-gonic/gin"
 	"time"
-	"Guang_Shun_Coin_Action/pkg/mariadb"
 )
 
 type addProductRequest struct {
@@ -22,44 +21,13 @@ type addProductRequest struct {
 
 func AddProduct(c *gin.Context) {
 	var err error
-	var query string
-	var exists bool
 	var productID string
 
 	// Create response
 	r := response.New()
 
 	// Validate token and set UUID in context (validation failed.)
-	auth.ValidateToken(c)
-
-	// Get UUID from context
-	uuid, exists := c.Get("UUID")
-	if !exists {
-		logger.Warn("[MEMBER] UUID not found from auth")
-		return
-	}
-
-	// Type assert UUID to string
-	UUID, ok := uuid.(string)
-	if !ok {
-		logger.Error("[MEMBER] UUID not a string")
-		return
-	}
-
-	// Check if user exists
-	query = "SELECT EXISTS(SELECT 1 FROM User WHERE userId = ?)"
-    err = mariadb.DB.QueryRow(query, UUID).Scan(&exists)
-	if err != nil && err.Error() != "sql: no rows in result set" {
-		logger.Error("[MEMBER] " + err.Error())
-		r.Message = err.Error()
-		c.JSON(http.StatusBadRequest, r)
-		return
-	} else if exists == false {
-		logger.Error("[MEMBER] user doesn't exists")
-		r.Message = "user doesn't exists"
-		c.JSON(http.StatusBadRequest, r)
-		return
-	}
+	UUID := auth.ValidateToken(c)
 
 	// Parse request body to JSON format
 	var addProductRequest addProductRequest
@@ -90,43 +58,12 @@ func AddProduct(c *gin.Context) {
 
 func AddImage(c *gin.Context) {
 	var err error
-	var query string
-	var exists bool
 
 	// Create response
 	r := response.New()
 
 	// Validate token and set UUID in context (validation failed.)
 	auth.ValidateToken(c)
-
-	// Get UUID from context
-	uuid, exists := c.Get("UUID")
-	if !exists {
-		logger.Warn("[MEMBER] UUID not found from auth")
-		return
-	}
-
-	// Type assert UUID to string
-	UUID, ok := uuid.(string)
-	if !ok {
-		logger.Error("[MEMBER] UUID not a string")
-		return
-	}
-
-	// Check if user exists
-	query = "SELECT EXISTS(SELECT 1 FROM User WHERE userId = ?)"
-    err = mariadb.DB.QueryRow(query, UUID).Scan(&exists)
-	if err != nil && err.Error() != "sql: no rows in result set" {
-		logger.Error("[MEMBER] " + err.Error())
-		r.Message = err.Error()
-		c.JSON(http.StatusBadRequest, r)
-		return
-	} else if exists == false {
-		logger.Error("[MEMBER] user doesn't exists")
-		r.Message = "user doesn't exists"
-		c.JSON(http.StatusBadRequest, r)
-		return
-	}
 
     // Parse the form data to get the files and productID
     form, err := c.MultipartForm()
@@ -139,11 +76,11 @@ func AddImage(c *gin.Context) {
 
     // Retrieve the list of files from the "files" field
     files := form.File["files"]
-	if len(files) == 0 {
-		logger.Error("[MEMBER] No files uploaded")
-        c.JSON(http.StatusBadRequest, gin.H{"error": "No files uploaded"})
-        return
-    }
+	// if len(files) == 0 {
+	// 	logger.Error("[MEMBER] No files uploaded")
+    //     c.JSON(http.StatusBadRequest, gin.H{"error": "No files uploaded"})
+    //     return
+    // }
 
     // Retrieve the productID from the form data
     productID := c.PostForm("productID")
@@ -167,5 +104,6 @@ func AddImage(c *gin.Context) {
 	}
 
     // Return a success message
-    c.JSON(http.StatusOK, gin.H{"message": "Files uploaded successfully"})
+	r.Status = true
+    c.JSON(http.StatusOK, r)
 }

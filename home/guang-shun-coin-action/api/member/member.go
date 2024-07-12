@@ -80,11 +80,10 @@ func addImage(files []*multipart.FileHeader, productID string) error {
         return err
     }
 
-    for _, file := range files {
+    for seq, file := range files {
 
 		imageID = uuid.NewString()
 		var imageUrl = "/assets/" + imageID
-		// fmt.Println(file)
 
         // Check if the file size exceeds the limit (10 MB)
         if file.Size > 10*1024*1024 { // 10 MB
@@ -124,14 +123,15 @@ func addImage(files []*multipart.FileHeader, productID string) error {
 
 		// Insert into database
 		query := `
-				INSERT INTO ProductImage (imageId, productId, imageUrl)
-				VALUES (?, ?, ?)
+				INSERT INTO ProductImage (imageId, productId, imageUrl, seq)
+				VALUES (?, ?, ?, ?)
 				`
 		_, err = mariadb.DB.Exec(
 			query, 
 			imageID, 
 			productID,
 			imageUrl,
+			seq,
 		)
 	
 		if err != nil {

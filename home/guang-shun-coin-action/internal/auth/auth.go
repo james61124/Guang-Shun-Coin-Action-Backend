@@ -4,6 +4,7 @@ import (
 	"Guang_Shun_Coin_Action/config"
 	"Guang_Shun_Coin_Action/internal/response"
 	"Guang_Shun_Coin_Action/pkg/logger"
+	"Guang_Shun_Coin_Action/pkg/mariadb"
 	"fmt"
 	"net/http"
 	"strings"
@@ -47,7 +48,9 @@ func GenerateToken(UUID, email string) (string, error) {
     return tokenString, nil
 }
 
-func ValidateToken(c *gin.Context) {
+func ValidateToken(c *gin.Context) string {
+	var query string
+
 	// Get token from header
 	auth := c.GetHeader("Authorization")
 	if auth == "" {
@@ -56,7 +59,7 @@ func ValidateToken(c *gin.Context) {
 		logger.Warn("[AUTH] Received request without Bearer authorization header")
 		c.JSON(http.StatusOK, r)
 		c.Abort()
-		return
+		return ""
 	}
     token := strings.Split(auth, "Bearer ")[1]
 
@@ -86,7 +89,7 @@ func ValidateToken(c *gin.Context) {
 		}
 		c.JSON(http.StatusUnauthorized, r)
 		c.Abort()
-		return
+		return ""
 	}
 
 	// Check if token is valid -> continue
@@ -95,6 +98,39 @@ func ValidateToken(c *gin.Context) {
 		c.Next()
 	} else {
 		c.Abort()
-		return
+		return ""
 	}
+
+	// Get UUID from context
+	uuid, exists := c.Get("UUID")
+	if !exists {
+		logger.Warn("[AUTH] UUID not found from auth")
+		return ""
+	}
+
+	// Type assert UUID to string
+	UUID, ok := uuid.(string)
+	if !ok {
+		logger.Error("[AUTH] UUID not a string")
+		return ""
+	}
+
+	// Check if user exists
+	query = "SELECT EXISTS(SELECT 1 FROM User WHERE userId = ?)"
+    err = mariadb.DB.QueryRow(query, UUID).Scan(&exists)
+	if err != nil && err.Error() != "sql: no rows in result set" {
+		var r = response.New()
+		logger.Error("[AUTH] " + err.Error())
+		r.Message = err.Error()
+		c.JSON(http.StatusBadRequest, r)
+		return ""
+	} else if exists == false {
+		var r = response.New()
+		logger.Error("[AUTH] user doesn't exists")
+		r.Message = "user doesn't exists"
+		c.JSON(http.StatusBadRequest, r)
+		return ""
+	}
+
+	return UUID
 }

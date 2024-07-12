@@ -51,6 +51,9 @@ func Main() {
 	
 	// // Product
 	r.POST("/shop/product", shop.Product)
+	r.POST("/shop/totalProduct", shop.TotalProduct)
+	r.POST("/shop/detail", shop.Detail)
+	r.POST("/shop/bid", shop.Bid)
 
 	// Member
 	r.POST("/member/addProduct", member.AddProduct)

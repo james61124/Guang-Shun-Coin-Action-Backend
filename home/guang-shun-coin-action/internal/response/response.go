@@ -35,9 +35,27 @@ type ProductResponse struct {
 	EndedAt     time.Time `json:"endedAt"`
 }
 
-// type ProductRespnseList struct {
-// 	ProductResponse []ProductRespnseList `json: productInfo`
-// }
+type TotalProductResponse struct {
+	Total   int    `json:"total"`
+}
+
+type BidHistory struct {
+	Username string `json:"username"`
+	BidPrice float64 `json:"bidPrice"`
+	BidTime  time.Time `json:"bidTime"`
+}
+
+type DetailResponse struct {
+	Name        string      `json:"name"`
+	Category        string      `json:"category"`
+	Price       float64     `json:"price"`
+	MinBidPrice float64     `json:"minBidPrice"`
+	StartTime   time.Time   `json:"startTime"`
+	EndTime     time.Time   `json:"endTime"`
+	Description string      `json:"description"`
+	ImageUrl    []string    `json:"imageUrl"`
+	History     []BidHistory `json:"history"`
+}
 
 type ULIDResponse struct {
 	ULID string `json:"ULID"`

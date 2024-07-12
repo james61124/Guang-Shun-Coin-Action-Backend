@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS ProductImage (
     imageId VARCHAR(36) PRIMARY KEY NOT NULL,
     productId VARCHAR(36) NOT NULL,
     imageUrl VARCHAR(255) NOT NULL,
+    seq BIGINT NOT NULL,
     FOREIGN KEY (productId) REFERENCES `Product` (productId) ON DELETE CASCADE
 );
 
