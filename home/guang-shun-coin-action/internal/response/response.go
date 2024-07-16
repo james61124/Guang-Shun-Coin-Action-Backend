@@ -48,6 +48,7 @@ type BidHistory struct {
 }
 
 type GetBidHistory struct {
+	ProductID string `json:"productID"`
 	ProductName string `json:"productName"`
 	BidPrice float64 `json:"bidPrice"`
 	BidTime  time.Time `json:"bidTime"`
@@ -65,6 +66,17 @@ type DetailResponse struct {
 	Description string      `json:"description"`
 	ImageUrl    []string    `json:"imageUrl"`
 	History     []BidHistory `json:"history"`
+}
+
+type GetUserInfoResponse struct {
+	RealName        string      `json:"realName"`
+	NickName        string      `json:"nickName"`
+	Cellphone        string      `json:"cellphone"`
+	FbAccount        string      `json:"fbAccount"`
+	Email        string      `json:"email"`
+	Postcode        string      `json:"postcode"`
+	ShippingAddr        string      `json:"shippingAddr"`
+	Username        string      `json:"username"`
 }
 
 type ULIDResponse struct {

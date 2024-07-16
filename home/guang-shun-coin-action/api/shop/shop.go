@@ -235,6 +235,41 @@ func bid(pr BidRequest, UUID string) error {
         return err
     }
 
+	logger.Info("[SHOP] Successfully bid")
+	return nil
+	
+}
+
+func star(pr StarRequest, UUID string) error {
+
+	var query string
+	trackingID := uuid.NewString()
+
+	if pr.IsStar == true {
+		// insert a new TrackingList
+		query = `
+			INSERT INTO TrackingList (trackingId, userId, productId)
+			VALUES (?, ?, ?);
+			`
+		_, err := mariadb.DB.Exec(query, trackingID, UUID, pr.ProductID)
+		if err != nil {
+			logger.Error("[SHOP] " + err.Error())
+			return err
+		}
+	} else {
+		query := `
+			DELETE FROM TrackingList 
+			WHERE userId = ? AND productId = ?
+			`
+		_, err := mariadb.DB.Exec(query, UUID, pr.ProductID)
+		if err != nil {
+			logger.Error("[SHOP] " + err.Error())
+			return err
+		}
+
+	}
+	
+	logger.Info("[SHOP] Successfully insert star info")
 	return nil
 	
 }

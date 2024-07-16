@@ -171,7 +171,7 @@ func checkFileType(file multipart.File) error {
 
     // Check if the file type is an image
     if !isImage(buf) {
-		logger.Error("[Product] Invalid file type")
+		logger.Error("[Member] Invalid file type")
         return fmt.Errorf("Invalid file type")
     }
 
@@ -193,9 +193,9 @@ func getHistoryBid(rr getHistoryBidRequest, ownerUUID string) ([]response.GetBid
 	rows, err := mariadb.DB.Query(query, ownerUUID, productNums, offset)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			logger.Warn("[SHOP] No product is available currently.\n")
+			logger.Warn("[Member] No product is available currently.\n")
 		}
-		logger.Error("[SHOP] " + err.Error())
+		logger.Error("[Member] " + err.Error())
 	}
 	defer rows.Close()
 
@@ -204,38 +204,37 @@ func getHistoryBid(rr getHistoryBidRequest, ownerUUID string) ([]response.GetBid
 		
 		var historyBid response.GetBidHistory
 		var bidTime string
-		var productID string
 
-		if err = rows.Scan(&productID, &historyBid.BidPrice, &bidTime, &historyBid.Status); err != nil {
-			logger.Error("[SHOP] " + err.Error())
+		if err = rows.Scan(&historyBid.ProductID, &historyBid.BidPrice, &bidTime, &historyBid.Status); err != nil {
+			logger.Error("[Member] " + err.Error())
 			return historyBidList, err
 		}
 		historyBid.BidTime, err = time.Parse("2006-01-02 15:04:05", bidTime)
 		if err != nil {
-			logger.Error("[SHOP] " + err.Error())
+			logger.Error("[Member] " + err.Error())
 			return historyBidList, err
 		}
 
 		// get productName
 		query = `SELECT productName FROM Product WHERE productId = ?;`;
-		err := mariadb.DB.QueryRow(query, productID).Scan(&historyBid.ProductName)
+		err := mariadb.DB.QueryRow(query, historyBid.ProductID).Scan(&historyBid.ProductName)
 		if err != nil {
-			logger.Error("[SHOP] " + err.Error())
+			logger.Error("[Member] " + err.Error())
 			return historyBidList, err
 		}
 		
 		// get imageUrl
 		query = `SELECT imageUrl FROM ProductImage WHERE productId = ? ORDER BY seq LIMIT 1;`;
-		err = mariadb.DB.QueryRow(query, productID).Scan(&historyBid.ImageUrl)
+		err = mariadb.DB.QueryRow(query, historyBid.ProductID).Scan(&historyBid.ImageUrl)
 		if err != nil {
-			logger.Error("[SHOP] " + err.Error())
+			logger.Error("[Member] " + err.Error())
 			return historyBidList, err
 		}
 
 		historyBidList = append(historyBidList, historyBid)
 	}
 
-	logger.Info("[SHOP] Successfully get historyBidList")
+	logger.Info("[Member] Successfully get historyBidList")
 	return historyBidList, nil
 }
 
@@ -247,13 +246,30 @@ func totalPagesOfHistoryBid(UUID string) (int, error) {
     var productCount int
     err = mariadb.DB.QueryRow(query, UUID).Scan(&productCount)
     if err != nil {
-        logger.Error("[SHOP] " + err.Error())
+        logger.Error("[Member] " + err.Error())
 		return productCount, err
     }
 
 	total := fmt.Sprintf("%d", productCount / 12 + 1)
-	logger.Info("[SHOP] Successfully return total pages of history bid: " + total)
+	logger.Info("[Member] Successfully return total pages of history bid: " + total)
 	
 	return productCount / 12 + 1, err
+}
+
+func getUserInfo(UUID string) (response.GetUserInfoResponse, error) {
+	var err error
+
+    query := `SELECT realName, nickName, cellphone, fbAccount, email, postcode, shippingAddr, username FROM User WHERE userId = ?`
+
+    var getUserInfoResponse response.GetUserInfoResponse
+    err = mariadb.DB.QueryRow(query, UUID).Scan(&getUserInfoResponse.RealName, &getUserInfoResponse.NickName, &getUserInfoResponse.Cellphone, &getUserInfoResponse.FbAccount, &getUserInfoResponse.Email, &getUserInfoResponse.Postcode, &getUserInfoResponse.ShippingAddr, &getUserInfoResponse.Username)
+    if err != nil {
+        logger.Error("[Member] " + err.Error())
+		return getUserInfoResponse, err
+    }
+
+	logger.Info("[Member] Successfully return user info: " + UUID)
+	
+	return getUserInfoResponse, err
 }
 

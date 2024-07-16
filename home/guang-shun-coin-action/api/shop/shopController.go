@@ -27,6 +27,12 @@ type BidRequest struct {
 	BidPrice int `json:"bidPrice"`
 }
 
+type StarRequest struct {
+    ProductID string `json:"productID"`
+	IsStar bool `json:"isStar"`
+}
+
+
 func Product(c *gin.Context) {
 	var err error
 
@@ -147,6 +153,36 @@ func Bid(c *gin.Context) {
 			c.JSON(http.StatusOK, r)
 			return
 		}
+		logger.Warn("[SHOP] " + err.Error())
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	r.Status = true
+	c.JSON(http.StatusOK, r)
+}
+
+func Star(c *gin.Context) {
+	var err error
+
+	// Create response
+	r := response.New()
+
+	// Validate token and set UUID in context (validation failed.)
+	UUID := auth.ValidateToken(c)
+
+	// Parse request body to JSON format
+	var starRequest StarRequest
+	if err = c.ShouldBindJSON(&starRequest); err != nil {
+		logger.Warn("[SHOP] " + err.Error())
+		r.Message = err.Error()
+		c.JSON(http.StatusBadRequest, r)
+		return
+	}
+
+	err = star(starRequest, UUID)
+	if err != nil {
+		r.Message = err.Error()
 		logger.Warn("[SHOP] " + err.Error())
 		c.JSON(http.StatusInternalServerError, r)
 		return
