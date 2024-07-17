@@ -256,20 +256,5 @@ func totalPagesOfHistoryBid(UUID string) (int, error) {
 	return productCount / 12 + 1, err
 }
 
-func getUserInfo(UUID string) (response.GetUserInfoResponse, error) {
-	var err error
 
-    query := `SELECT realName, nickName, cellphone, fbAccount, email, postcode, shippingAddr, username FROM User WHERE userId = ?`
-
-    var getUserInfoResponse response.GetUserInfoResponse
-    err = mariadb.DB.QueryRow(query, UUID).Scan(&getUserInfoResponse.RealName, &getUserInfoResponse.NickName, &getUserInfoResponse.Cellphone, &getUserInfoResponse.FbAccount, &getUserInfoResponse.Email, &getUserInfoResponse.Postcode, &getUserInfoResponse.ShippingAddr, &getUserInfoResponse.Username)
-    if err != nil {
-        logger.Error("[Member] " + err.Error())
-		return getUserInfoResponse, err
-    }
-
-	logger.Info("[Member] Successfully return user info: " + UUID)
-	
-	return getUserInfoResponse, err
-}
 

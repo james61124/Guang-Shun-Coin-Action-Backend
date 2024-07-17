@@ -45,11 +45,14 @@ func Main() {
 
 	r.StaticFS("/assets",http.Dir("./assets"))
 
-	// // Users (no token validation)
+	// Users (no token validation)
 	r.POST("/user/register", user.Register)
 	r.POST("/user/login", user.Login)
+	r.POST("/user/getUserInfo", user.GetUserInfo)
+	r.POST("/user/updateUserInfo", user.UpdateUserInfo)
+	r.POST("/user/updatePassword", user.UpdatePassword)
 	
-	// // Product
+	// Product
 	r.POST("/shop/product", shop.Product)
 	r.POST("/shop/totalPagesOfProduct", shop.TotalPagesOfProduct)
 	r.POST("/shop/detail", shop.Detail)
@@ -61,7 +64,7 @@ func Main() {
 	r.POST("/member/addImage", member.AddImage)
 	r.POST("/member/getHistoryBid", member.GetHistoryBid)
 	r.POST("/member/totalPagesOfHistoryBid", member.TotalPagesOfHistoryBid)
-	r.POST("/member/getUserInfo", member.GetUserInfo)
+	
 
 	// // Auth middleware for all routes below
 	// r.Use(auth.ValidateToken)

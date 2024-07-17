@@ -3,6 +3,7 @@ package user
 import (
 	"Guang_Shun_Coin_Action/pkg/logger"
 	"Guang_Shun_Coin_Action/pkg/mariadb"
+	"Guang_Shun_Coin_Action/internal/response"
 	"errors"
 	"strings"
 	"regexp"
@@ -21,7 +22,7 @@ func checkPasswordHash(password, hash string) bool {
 }
 
 func register(rr registerRequest) error {
-	var query, username string
+	var query, username, cellphone string
 	var err error
 
 	// Check whether username is empty
@@ -51,6 +52,17 @@ func register(rr registerRequest) error {
 	if rr.Cellphone == "" {
 		logger.Warn("[USER] cellphone is empty")
 		return errors.New("cellphone is empty")
+	}
+
+	// Check if cellphone already exists
+	query = "SELECT cellphone FROM `User` WHERE cellphone = ?"
+	err = mariadb.DB.QueryRow(query, rr.Username).Scan(&cellphone)
+	if err != nil && err.Error() != "sql: no rows in result set" {
+		logger.Error("[USER] " + err.Error())
+		return err
+	} else if cellphone != "" {
+		logger.Warn("[USER] cellphone:" + rr.Username + " already exists")
+		return errors.New("cellphone already exists")
 	}
 
 	// Check whether password is empty
@@ -195,66 +207,199 @@ func login(lr loginRequest) (string, error) {
 	return UUID, nil
 }
 
-// func get(UUID string) (UserInfo, error) {
-// 	var query string
-// 	var err error
-// 	var userInfo UserInfo
+func getUserInfo(UUID string) (response.GetUserInfoResponse, error) {
+	var err error
 
-// 	// Get user info (UUID, Username, Is_Pro)
-// 	query = "SELECT UUID, Username, Is_Pro FROM User_Info WHERE UUID = ?"
-// 	err = mariadb.DB.QueryRow(query, UUID).Scan(&userInfo.UUID, &userInfo.Username, &userInfo.Is_Pro)
-// 	if err != nil {
-// 		if err.Error() == "sql: no rows in result set" {
-// 			logger.Warn("[USER] UUID: " + UUID + " not found")
-// 			return userInfo, err
-// 		}
-// 		logger.Error("[USER] " + err.Error())
-// 		return userInfo, err
-// 	}
+    query := `SELECT realName, nickName, cellphone, fbAccount, email, postcode, shippingAddr, username FROM User WHERE userId = ?`
 
-// 	// Get user email
-// 	query = "SELECT Email FROM User WHERE UUID = ?"
-// 	err = mariadb.DB.QueryRow(query, UUID).Scan(&userInfo.Email)
-// 	if err != nil {
-// 		logger.Error("[USER] " + err.Error())
-// 		return userInfo, err
-// 	}
+    var getUserInfoResponse response.GetUserInfoResponse
+    err = mariadb.DB.QueryRow(query, UUID).Scan(&getUserInfoResponse.RealName, &getUserInfoResponse.NickName, &getUserInfoResponse.Cellphone, &getUserInfoResponse.FbAccount, &getUserInfoResponse.Email, &getUserInfoResponse.Postcode, &getUserInfoResponse.ShippingAddr, &getUserInfoResponse.Username)
+    if err != nil {
+        logger.Error("[User] " + err.Error())
+		return getUserInfoResponse, err
+    }
 
-// 	logger.Info("[USER] Successfully retrieved user info for UUID: " + UUID)
+	logger.Info("[User] Successfully return user info: " + UUID)
+	
+	return getUserInfoResponse, err
+}
 
-// 	return userInfo, nil
-// }
+func updateUserInfo(UUID string, rr updateUserInfoRequest) error {
+	var err error
+	var username, cellphone string
 
-// func update(ur updateRequest) error {
-// 	var query string
+	// Check whether username is empty
+	if rr.Username == "" {
+		logger.Warn("[USER] username is empty")
+		return errors.New("username is empty")
+	}
 
-// 	// Update user info
-// 	query = "UPDATE User_Info SET Username = ?, Is_Pro = ? WHERE UUID = ?"
-// 	result, err := mariadb.DB.Exec(query, ur.Username, ur.Is_Pro, ur.UUID)
-// 	if err != nil {
-// 		logger.Error("[USER] " + err.Error())
-// 		return err
-// 	}
+	// Check if user already exists if username has been modified
+	query := "SELECT username FROM `User` WHERE userId = ?"
+	err = mariadb.DB.QueryRow(query, UUID).Scan(&username)
+	if err != nil && err.Error() != "sql: no rows in result set" {
+		logger.Error("[USER] " + err.Error())
+		return err
+	}
+	if username != rr.Username {
+		query = "SELECT username FROM `User` WHERE username = ?"
+		err = mariadb.DB.QueryRow(query, rr.Username).Scan(&username)
+		if err != nil && err.Error() != "sql: no rows in result set" {
+			logger.Error("[USER] " + err.Error())
+			return err
+		} else if username != "" {
+			logger.Warn("[USER] username:" + rr.Username + " already exists")
+			return errors.New("username already exists")
+		}
+	}
 
-// 	// Check if UUID exists
-// 	rowsaffected, err := result.RowsAffected()
-// 	if err != nil {
-// 		logger.Error("[USER] " + err.Error())
-// 		return err
-// 	} else if rowsaffected == 0 {
-// 		logger.Warn("[USER] UUID: " + ur.UUID + " not found")
-// 		return errors.New("user not found")
-// 	}
+	
+	// Check whether address is empty
+	if rr.ShippingAddr == "" {
+		logger.Warn("[USER] address is empty")
+		return errors.New("address is empty")
+	}
 
-// 	// Update user email
-// 	query = "UPDATE User SET Email = ? WHERE UUID = ?"
-// 	_, err = mariadb.DB.Exec(query, ur.Email, ur.UUID)
-// 	if err != nil {
-// 		logger.Error("[USER] " + err.Error())
-// 		return err
-// 	}
+	// Check whether cellphone is empty
+	if rr.Cellphone == "" {
+		logger.Warn("[USER] cellphone is empty")
+		return errors.New("cellphone is empty")
+	}
 
-// 	logger.Info("[USER] Successfully updated user info for UUID: " + ur.UUID)
+	// Check if cellphone already exists if cellphone has been modified
+	query = "SELECT cellphone FROM `User` WHERE userId = ?"
+	err = mariadb.DB.QueryRow(query, UUID).Scan(&cellphone)
+	if err != nil && err.Error() != "sql: no rows in result set" {
+		logger.Error("[USER] " + err.Error())
+		return err
+	}
+	if cellphone != rr.Cellphone {
+		query = "SELECT cellphone FROM `User` WHERE cellphone = ?"
+		err = mariadb.DB.QueryRow(query, rr.Cellphone).Scan(&cellphone)
+		if err != nil && err.Error() != "sql: no rows in result set" {
+			logger.Error("[USER] " + err.Error())
+			return err
+		} else if cellphone != "" {
+			logger.Warn("[USER] cellphone:" + rr.Cellphone + " already exists")
+			return errors.New("cellphone already exists")
+		}
+	}
 
-// 	return nil
-// }
+	// Check pass in email field (Email has @ symbol)
+	if rr.Email != "" && !strings.Contains(rr.Email, "@") {
+		logger.Warn("[USER] Invalid email address")
+		return errors.New("invalid email address")
+	}
+
+	// Check pass in phone field (phone number: start with 09 and 10 numbers in total)
+	pattern := `^09\d{8}$`
+	regex, err := regexp.Compile(pattern)
+	if err != nil {
+	    logger.Error("[USER] Error compiling regex:" + rr.Cellphone)
+	    return err
+	}
+	if !regex.MatchString(rr.Cellphone) {
+	    logger.Warn("[USER] Invalid phone number format")
+	    return errors.New("invalid phone number format")
+	}
+
+    query = `UPDATE User SET realName = ?, nickName = ?, cellphone = ?, fbAccount = ?, email = ?, postcode = ?, shippingAddr = ?, username = ? WHERE userId = ?`
+    _, err = mariadb.DB.Exec(query, rr.RealName, rr.NickName, rr.Cellphone, rr.FbAccount, rr.Email, rr.Postcode, rr.ShippingAddr, rr.Username, UUID)
+    if err != nil {
+        logger.Error("[User] " + err.Error())
+        return err
+    }
+
+	logger.Info("[User] Successfully update user info: " + UUID)
+	
+	return err
+}
+
+func updatePassword(UUID string, rr updatePasswordRequest) error {
+	var err error
+	var password string
+
+	// Check whether originalPassword is empty
+	if rr.OriginPassword == "" {
+		logger.Warn("[USER] originalPassword is empty")
+		return errors.New("originalPassword is empty")
+	}
+
+	// Check whether newPassword is empty
+	if rr.NewPassword == "" {
+		logger.Warn("[USER] newPassword is empty")
+		return errors.New("newPassword is empty")
+	}
+
+	// Check whether confirmNewPassword is empty
+	if rr.ConfirmNewPassword == "" {
+		logger.Warn("[USER] confirmNewPassword is empty")
+		return errors.New("confirmNewPassword is empty")
+	}
+
+	// Get user password
+	query := "SELECT userPasswd FROM User WHERE userId = ?"
+	err = mariadb.DB.QueryRow(query, UUID).Scan(&password)
+	if err != nil {
+		logger.Error("[USER] " + err.Error())
+		return err
+	}
+
+	// Check if password is correct
+	if !checkPasswordHash(rr.OriginPassword, password) {
+		logger.Warn("[USER] Incorrect password")
+		return errors.New("originalPassword is wrong")
+	}
+
+	// Check if password and passwordConfirm is the same
+	if rr.NewPassword != rr.ConfirmNewPassword {
+		logger.Warn("[USER] newPassword is different from confirmNewPassword")
+		return errors.New("newPassword is different from confirmNewPassword")
+	}
+
+	// Check if password contains uppercase letters, lowercase letters, and digits
+	lowercasePattern := `[a-z]`
+	uppercasePattern := `[A-Z]`
+	digitPattern := `\d`
+	lowercaseRegex, err := regexp.Compile(lowercasePattern)
+	if err != nil {
+	    logger.Error("[USER] Error compiling regex:" + rr.NewPassword)
+	    return err
+	}
+	uppercaseRegex, err := regexp.Compile(uppercasePattern)
+	if err != nil {
+	    logger.Error("[USER] Error compiling regex:" + rr.NewPassword)
+	    return err
+	}
+	digitRegex, err := regexp.Compile(digitPattern)
+	if err != nil {
+	    logger.Error("[USER] Error compiling regex:" + rr.NewPassword)
+	    return err
+	}
+	if !lowercaseRegex.MatchString(rr.NewPassword) {
+		return errors.New("invalid newPassword format")
+	}
+	if !uppercaseRegex.MatchString(rr.NewPassword) {
+		return errors.New("invalid newPassword format")
+	}
+	if !digitRegex.MatchString(rr.NewPassword) {
+		return errors.New("invalid newPassword format")
+	}
+
+	// Hash password
+	if rr.NewPassword, err = hashPassword(rr.NewPassword); err != nil {
+		logger.Error("[USER] " + err.Error())
+		return err
+	}
+
+    query = `UPDATE User SET userPasswd = ? WHERE userId = ?`
+    _, err = mariadb.DB.Exec(query, rr.NewPassword, UUID)
+    if err != nil {
+        logger.Error("[User] " + err.Error())
+        return err
+    }
+
+	logger.Info("[User] Successfully update user info: " + UUID)
+	
+	return err
+}

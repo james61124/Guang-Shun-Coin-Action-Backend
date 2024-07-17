@@ -30,6 +30,23 @@ type loginRequest struct {
 	Password string `json:"Password" binding:"required"`
 }
 
+type updateUserInfoRequest struct {
+	RealName        string      `json:"realName"`
+	NickName        string      `json:"nickName"`
+	Cellphone        string      `json:"cellphone"`
+	FbAccount        string      `json:"fbAccount"`
+	Email        string      `json:"email"`
+	Postcode        string      `json:"postcode"`
+	ShippingAddr        string      `json:"shippingAddr"`
+	Username        string      `json:"username"`
+}
+
+type updatePasswordRequest struct {
+	OriginPassword        string      `json:"originPassword"`
+	NewPassword        string      `json:"newPassword"`
+	ConfirmNewPassword        string      `json:"confirmNewPassword"`
+}
+
 func Register(c *gin.Context) {
 	var err error
 
@@ -66,6 +83,10 @@ func Register(c *gin.Context) {
 			return
 		}
 		if r.Message == "password and passwordConfirm is different" || r.Message == "invalid password format" {
+			c.JSON(http.StatusOK, r)
+			return
+		}
+		if r.Message == "cellphone already exists" {
 			c.JSON(http.StatusOK, r)
 			return
 		}
@@ -119,77 +140,115 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, r)
 }
 
-// func Get(c *gin.Context) {
-// 	var err error
+func GetUserInfo(c *gin.Context) {
+	var err error
 
-// 	// Create response
-// 	r := response.New()
+	// Create response
+	r := response.New()
 
-// 	// Check UUID format
-// 	if matched, _ := regexp.MatchString("^[a-z0-9-]{36}$", c.Param("uuid")); !matched {
-// 		logger.Warn("[LEDGER] UUID is not valid format")
-// 		r.Message = "UUID is not valid format"
-// 		c.JSON(http.StatusBadRequest, r)
-// 		return
-// 	}
+	// Validate token and set UUID in context (validation failed.)
+	UUID := auth.ValidateToken(c)
 
-// 	// Get user info
-// 	userInfo, err := get(c.Param("uuid"))
-// 	if err != nil {
-// 		if err.Error() == "sql: no rows in result set" {
-// 			r.Message = "user not found"
-// 			c.JSON(http.StatusNotFound, r)
-// 			return
-// 		}
-// 		r.Message = err.Error()
-// 		c.JSON(http.StatusInternalServerError, r)
-// 		return
-// 	}
+	userInfo, err := getUserInfo(UUID)
+	if err != nil {
+		r.Message = err.Error()
+		logger.Warn("[User] " + err.Error())
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
 
-// 	// return user info with formatted response
-// 	r.Status = true
-// 	r.Data = userInfo
-// 	c.JSON(http.StatusOK, r)
-// }
+	r.Status = true
+	r.Data = userInfo
+	c.JSON(http.StatusOK, r)
+}
 
-// func Update(c *gin.Context) {
-// 	var err error
+func UpdateUserInfo(c *gin.Context) {
+	var err error
 
-// 	// Create response
-// 	r := response.New()
+	// Create response
+	r := response.New()
 
-// 	// Parse request body to JSON format
-// 	var updateRequest updateRequest
-// 	if err = c.ShouldBindJSON(&updateRequest); err != nil {
-// 		logger.Warn("[USER] " + err.Error())
-// 		r.Message = err.Error()
-// 		c.JSON(http.StatusBadRequest, r)
-// 		return
-// 	}
+	// Validate token and set UUID in context (validation failed.)
+	UUID := auth.ValidateToken(c)
 
-// 	// Can not update other user's info
-// 	if updateRequest.UUID != c.MustGet("UUID") {
-// 		logger.Warn("[USER] Can not update other user's info")
-// 		r.Message = "Can not update other user's info"
-// 		c.JSON(http.StatusUnauthorized, r)
-// 		return
-// 	}
+	// Parse request body to JSON format
+	var updateUserInfoRequest updateUserInfoRequest
+	if err := c.ShouldBindJSON(&updateUserInfoRequest); err != nil {
+		logger.Warn("[USER] " + err.Error())
+		r.Message = err.Error()
+		c.JSON(http.StatusOK, r)
+		return
+	}
 
-// 	// Update user info
-// 	err = update(updateRequest)
-// 	if err != nil {
-// 		r.Message = err.Error()
-// 		if r.Message == "user not found" {
-// 			c.JSON(http.StatusNotFound, r)
-// 			return
-// 		}
-// 		c.JSON(http.StatusInternalServerError, r)
-// 		return
-// 	}
+	err = updateUserInfo(UUID, updateUserInfoRequest)
+	if err != nil {
+		r.Message = err.Error()
+		if r.Message == "username is empty" || r.Message == "address is empty" {
+			c.JSON(http.StatusOK, r)
+			return
+		}
+		if r.Message == "cellphone is empty" || r.Message == "username already exists" {
+			c.JSON(http.StatusOK, r)
+			return
+		}
+		if r.Message == "invalid email address" || r.Message == "invalid phone number format" {
+			c.JSON(http.StatusOK, r)
+			return
+		}
+		if r.Message == "cellphone already exists" {
+			c.JSON(http.StatusOK, r)
+			return
+		}
+		logger.Warn("[USER] " + err.Error())
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
 
-// 	// return formatted response
-// 	r.Status = true
-// 	c.JSON(http.StatusOK, r)
-// }
+	r.Status = true
+	c.JSON(http.StatusOK, r)
+}
 
+func UpdatePassword(c *gin.Context) {
+	var err error
 
+	// Create response
+	r := response.New()
+
+	// Validate token and set UUID in context (validation failed.)
+	UUID := auth.ValidateToken(c)
+
+	// Parse request body to JSON format
+	var updatePasswordRequest updatePasswordRequest
+	if err := c.ShouldBindJSON(&updatePasswordRequest); err != nil {
+		logger.Warn("[USER] " + err.Error())
+		r.Message = err.Error()
+		c.JSON(http.StatusOK, r)
+		return
+	}
+
+	err = updatePassword(UUID, updatePasswordRequest)
+	if err != nil {
+		r.Message = err.Error()
+		expectedErrors := []string{
+			"originalPassword is empty",
+			"newPassword is empty",
+			"confirmNewPassword is empty",
+			"originalPassword is wrong",
+			"newPassword is different from confirmNewPassword",
+			"invalid newPassword format",
+		}
+		for _, e := range expectedErrors {
+			if r.Message == e {
+				c.JSON(http.StatusOK, r)
+				return
+			}
+		}
+		
+		logger.Warn("[USER] " + err.Error())
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	r.Status = true
+	c.JSON(http.StatusOK, r)
+}

@@ -167,24 +167,3 @@ func TotalPagesOfHistoryBid(c *gin.Context) {
 	c.JSON(http.StatusOK, r)
 }
 
-func GetUserInfo(c *gin.Context) {
-	var err error
-
-	// Create response
-	r := response.New()
-
-	// Validate token and set UUID in context (validation failed.)
-	UUID := auth.ValidateToken(c)
-
-	userInfo, err := getUserInfo(UUID)
-	if err != nil {
-		r.Message = err.Error()
-		logger.Warn("[MEMBER] " + err.Error())
-		c.JSON(http.StatusInternalServerError, r)
-		return
-	}
-
-	r.Status = true
-	r.Data = userInfo
-	c.JSON(http.StatusOK, r)
-}
