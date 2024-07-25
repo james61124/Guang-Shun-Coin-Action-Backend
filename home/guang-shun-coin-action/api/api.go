@@ -51,6 +51,7 @@ func Main() {
 	r.POST("/user/getUserInfo", user.GetUserInfo)
 	r.POST("/user/updateUserInfo", user.UpdateUserInfo)
 	r.POST("/user/updatePassword", user.UpdatePassword)
+	r.POST("/user/resetPassword", user.ResetPassword)
 	
 	// Product
 	r.POST("/shop/product", shop.Product)
