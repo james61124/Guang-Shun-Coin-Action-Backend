@@ -18,34 +18,88 @@ type loginRequest struct {
 
 type registerRequest struct {
 	UserID    string `json:"UserID"`
-	Cellphone string `json:"Cellphone"`
-	Password  string `json:"Password"`
-	PasswordConfirm  string `json:"PasswordConfirm"`
+	Cellphone string `json:"Cellphone" binding:"required"`
+	Password  string `json:"Password" binding:"required"`
+	PasswordConfirm  string `json:"PasswordConfirm" binding:"required"`
 	RealName  string `json:"RealName"`
 	NickName  string `json:"NickName"`
 }
 
-
 type updateUserInfoRequest struct {
-	RealName        string      `json:"realName"`
-	NickName        string      `json:"nickName"`
-	Cellphone        string      `json:"cellphone"`
-	// FbAccount        string      `json:"fbAccount"`
-	// Email        string      `json:"email"`
-	// Postcode        string      `json:"postcode"`
-	// ShippingAddr        string      `json:"shippingAddr"`
-	// Username        string      `json:"username"`
+	RealName        string      `json:"realName" binding:"required"`
+	NickName        string      `json:"nickName" binding:"required"`
+	Cellphone        string     `json:"cellphone" binding:"required"`
 }
 
 type updatePasswordRequest struct {
-	OriginPassword     string      `json:"originPassword"`
-	NewPassword        string      `json:"newPassword"`
-	ConfirmNewPassword string      `json:"confirmNewPassword"`
+	OriginPassword     string      `json:"originPassword" binding:"required"`
+	NewPassword        string      `json:"newPassword" binding:"required"`
+	ConfirmNewPassword string      `json:"confirmNewPassword" binding:"required"`
 }
 type resetPasswordRequest struct {
-	Cellphone 		   string 	   `json:"cellphone"`
-	NewPassword        string      `json:"newPassword"`
-	ConfirmNewPassword string      `json:"confirmNewPassword"`
+	Cellphone 		   string 	   `json:"cellphone" binding:"required"`
+	NewPassword        string      `json:"newPassword" binding:"required"`
+	ConfirmNewPassword string      `json:"confirmNewPassword" binding:"required"`
+}
+
+var errorMessages = map[string]bool {
+	// cellphone
+    "cellphone is empty":    true,
+    "can't find the user with cellphone":  true,
+	"invalid phone number format": true,
+	"user already exists": true,
+	"the new cellphone already exists": true,
+	"unable to find the user based on the cellphone": true,
+	// password
+    "password is empty":     true,
+	"invalid password format": true,
+    "incorrect password":    true,
+	"password is different from PasswordConfirm": true, 
+	"originalPassword is wrong": true,
+	
+}
+
+func Login(c *gin.Context) {
+	var err error
+
+	// Create response
+	r := response.New()
+
+	// Parse request body to JSON format
+	var loginRequest loginRequest
+	if err = c.ShouldBindJSON(&loginRequest); err != nil {
+		logger.Warn("[USER] " + err.Error())
+		r.Message = err.Error()
+		c.JSON(http.StatusOK, r)
+		return
+	}
+
+	// Login the user
+	UUID, err := login(loginRequest)
+	if err != nil {
+		r.Message = err.Error()
+		errMessage, _ := r.Message.(string)
+		if errorMessages[errMessage] {
+			c.JSON(http.StatusOK, r)
+			return
+		}
+		logger.Warn("[USER] " + err.Error())
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	// Generate token
+	token, err := auth.GenerateToken(UUID, loginRequest.Cellphone)
+	if err != nil {
+		r.Message = err.Error()
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+	
+	// return UUID with formatted response
+	r.Status = true
+	r.Data = response.LoginResponse{UUID: UUID, Token: token}
+	c.JSON(http.StatusOK, r)
 }
 
 
@@ -68,77 +122,18 @@ func Register(c *gin.Context) {
 	err = register(registerRequest)
 	if err != nil {
 		r.Message = err.Error()
-		if r.Message == "username is empty" || r.Message == "password is empty" {
+		errMessage, _ := r.Message.(string)
+		if errorMessages[errMessage] {
 			c.JSON(http.StatusOK, r)
 			return
 		}
-		if r.Message == "passwordConfirm is empty" || r.Message == "address is empty" {
-			c.JSON(http.StatusOK, r)
-			return
-		}
-		if r.Message == "cellphone is empty" || r.Message == "username already exists" {
-			c.JSON(http.StatusOK, r)
-			return
-		}
-		if r.Message == "invalid email address" || r.Message == "invalid phone number format" {
-			c.JSON(http.StatusOK, r)
-			return
-		}
-		if r.Message == "password and passwordConfirm is different" || r.Message == "invalid password format" {
-			c.JSON(http.StatusOK, r)
-			return
-		}
-		if r.Message == "cellphone already exists" {
-			c.JSON(http.StatusOK, r)
-			return
-		}
-		c.JSON(http.StatusInternalServerError, r)
-		return
-	}
-
-	// return UUID with formatted response
-	r.Status = true
-	c.JSON(http.StatusOK, r)
-}
-
-func Login(c *gin.Context) {
-	var err error
-
-	// Create response
-	r := response.New()
-
-	// Parse request body to JSON format
-	var loginRequest loginRequest
-	if err = c.ShouldBindJSON(&loginRequest); err != nil {
 		logger.Warn("[USER] " + err.Error())
-		r.Message = err.Error()
-		c.JSON(http.StatusOK, r)
-		return
-	}
-
-	// Login the user
-	UUID, err := login(loginRequest)
-	if err != nil {
-		r.Message = err.Error()
-		if r.Message == "incorrent password" || r.Message == "username not found" {
-			c.JSON(http.StatusOK, r)
-			return
-		}
 		c.JSON(http.StatusInternalServerError, r)
 		return
 	}
 
-	// Generate token
-	token, err := auth.GenerateToken(UUID, loginRequest.Cellphone)
-	if err != nil {
-		r.Message = err.Error()
-		c.JSON(http.StatusInternalServerError, r)
-		return
-	}
-	
 	// return UUID with formatted response
 	r.Status = true
-	r.Data = response.LoginResponse{UUID: UUID, Token: token}
 	c.JSON(http.StatusOK, r)
 }
 
@@ -185,19 +180,8 @@ func UpdateUserInfo(c *gin.Context) {
 	err = updateUserInfo(UUID, updateUserInfoRequest)
 	if err != nil {
 		r.Message = err.Error()
-		// if r.Message == "username is empty" || r.Message == "address is empty" {
-		// 	c.JSON(http.StatusOK, r)
-		// 	return
-		// }
-		if r.Message == "cellphone is empty" || r.Message == "username already exists" {
-			c.JSON(http.StatusOK, r)
-			return
-		}
-		// if r.Message == "invalid email address" || r.Message == "invalid phone number format" {
-		// 	c.JSON(http.StatusOK, r)
-		// 	return
-		// }
-		if r.Message == "cellphone already exists" {
+		errMessage, _ := r.Message.(string)
+		if errorMessages[errMessage] {
 			c.JSON(http.StatusOK, r)
 			return
 		}
@@ -231,21 +215,11 @@ func UpdatePassword(c *gin.Context) {
 	err = updatePassword(UUID, updatePasswordRequest)
 	if err != nil {
 		r.Message = err.Error()
-		expectedErrors := []string{
-			"originalPassword is empty",
-			"newPassword is empty",
-			"confirmNewPassword is empty",
-			"originalPassword is wrong",
-			"newPassword is different from confirmNewPassword",
-			"invalid newPassword format",
+		errMessage, _ := r.Message.(string)
+		if errorMessages[errMessage] {
+			c.JSON(http.StatusOK, r)
+			return
 		}
-		for _, e := range expectedErrors {
-			if r.Message == e {
-				c.JSON(http.StatusOK, r)
-				return
-			}
-		}
-		
 		logger.Warn("[USER] " + err.Error())
 		c.JSON(http.StatusInternalServerError, r)
 		return
@@ -261,9 +235,6 @@ func ResetPassword(c *gin.Context) {
 	// Create response
 	r := response.New()
 
-	// Validate token and set UUID in context (validation failed.)
-	// UUID := auth.ValidateToken(c)
-
 	// Parse request body to JSON format
 	var resetPasswordRequest resetPasswordRequest
 	if err := c.ShouldBindJSON(&resetPasswordRequest); err != nil {
@@ -274,24 +245,13 @@ func ResetPassword(c *gin.Context) {
 	}
 
 	err = resetPassword(resetPasswordRequest)
-
 	if err != nil {
 		r.Message = err.Error()
-		expectedErrors := []string{
-			"cellphone is empty",
-			"newPassword is empty",
-			"confirmNewPassword is empty",
-			"newPassword is different from confirmNewPassword",
-			"invalid newPassword format",
-			"Unable to find the row based on the cellphone",
+		errMessage, _ := r.Message.(string)
+		if errorMessages[errMessage] {
+			c.JSON(http.StatusOK, r)
+			return
 		}
-		for _, e := range expectedErrors {
-			if r.Message == e {
-				c.JSON(http.StatusOK, r)
-				return
-			}
-		}
-		
 		logger.Warn("[USER] " + err.Error())
 		c.JSON(http.StatusInternalServerError, r)
 		return

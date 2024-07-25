@@ -48,7 +48,7 @@ func Main() {
 	// Users (no token validation)
 	r.POST("/user/register", user.Register)
 	r.POST("/user/login", user.Login)
-	r.POST("/user/getUserInfo", user.GetUserInfo)
+	r.GET("/user/getUserInfo", user.GetUserInfo)
 	r.POST("/user/updateUserInfo", user.UpdateUserInfo)
 	r.POST("/user/updatePassword", user.UpdatePassword)
 	r.POST("/user/resetPassword", user.ResetPassword)
