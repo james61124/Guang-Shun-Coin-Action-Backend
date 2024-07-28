@@ -80,6 +80,7 @@ func register(rr registerRequest) error {
 	var query, cellphone string
 	var err error
 
+
 	err = validateCellphone(rr.Cellphone)
 	if err != nil {
 		return err
@@ -87,6 +88,11 @@ func register(rr registerRequest) error {
 	err = validatePassword(rr.Password)
 	if err != nil {
 		return err
+	}
+
+	if rr.PasswordConfirm == "" {
+		logger.Warn("[USER] confirmed password is empty")
+		return errors.New("confirmed password is empty")
 	}
 	
 	// Check if cellphone already exists
@@ -97,7 +103,7 @@ func register(rr registerRequest) error {
 		return err
 	} else if cellphone != "" {
 		logger.Warn("[USER] cellphone:" + rr.Cellphone + " already exists")
-		return errors.New("user already exists")
+		return errors.New("cellphone already exists")
 	}
 
 	// Check difference between password and passwordConfirm
@@ -229,7 +235,7 @@ func updateUserInfo(UUID string, rr updateUserInfoRequest) error {
 		logger.Error("[USER] " + err.Error())
 		return err
 	}
-	if duplicatedCount > 0 {
+	if duplicatedCount > 0 && rr.Cellphone != originalCellphone {
 		logger.Error("[USER] the new cellphone already exists")
 		return errors.New("the new cellphone already exists")
 	} else if duplicatedCount == 0 {
@@ -239,7 +245,6 @@ func updateUserInfo(UUID string, rr updateUserInfoRequest) error {
 			logger.Error("[User] " + err.Error())
 			return err
 		}
-		logger.Debug("set")
 		logger.Info("[User] Successfully update user info: " + rr.Cellphone)
 	}
 
@@ -251,6 +256,21 @@ func updatePassword(UUID string, rr updatePasswordRequest) error {
 	var err error
 	var cellphone, userPasswd string
 
+	if rr.OriginPassword == "" {
+		logger.Warn("[USER] original password is empty")
+		return errors.New("original password is empty")
+	}
+	
+	if rr.NewPassword == "" {
+		logger.Warn("[USER] new password is empty")
+		return errors.New("new password is empty")
+	}
+
+	if rr.ConfirmNewPassword == "" {
+		logger.Warn("[USER] confirmed password is empty")
+		return errors.New("confirmed password is empty")
+	}
+	
 	// Check if new password has correct format
 	err = validatePassword(rr.NewPassword)
 	if err != nil {
@@ -305,7 +325,6 @@ func resetPassword(rr resetPasswordRequest) error {
 	var err error
 	var query string
 
-
 	// Check pass in phone field (phone number: start with 09 and 10 numbers in total)
 	err = validateCellphone(rr.Cellphone)
 	if err != nil {
@@ -316,6 +335,11 @@ func resetPassword(rr resetPasswordRequest) error {
 	err = validatePassword(rr.NewPassword)
 	if err != nil {
 		return err
+	}
+
+	if rr.ConfirmNewPassword == "" {
+		logger.Warn("[USER] confirmed password is empty")
+		return errors.New("confirmed password is empty")
 	}
 
 	// Check if password and passwordConfirm is the same

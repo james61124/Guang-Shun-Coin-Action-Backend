@@ -12,34 +12,34 @@ import (
 )
 
 type loginRequest struct {
-	Cellphone string `json:"Cellphone" binding:"required"`
-	Password string `json:"Password" binding:"required"`
+	Cellphone string `json:"Cellphone"`
+	Password string `json:"Password"`
 }
 
 type registerRequest struct {
 	UserID    string `json:"UserID"`
-	Cellphone string `json:"Cellphone" binding:"required"`
-	Password  string `json:"Password" binding:"required"`
-	PasswordConfirm  string `json:"PasswordConfirm" binding:"required"`
+	Cellphone string `json:"Cellphone"`
+	Password  string `json:"Password"`
+	PasswordConfirm  string `json:"PasswordConfirm"`
 	RealName  string `json:"RealName"`
 	NickName  string `json:"NickName"`
 }
 
 type updateUserInfoRequest struct {
-	RealName        string      `json:"realName" binding:"required"`
-	NickName        string      `json:"nickName" binding:"required"`
-	Cellphone        string     `json:"cellphone" binding:"required"`
+	RealName        string      `json:"realName"`
+	NickName        string      `json:"nickName"`
+	Cellphone        string     `json:"cellphone"`
 }
 
 type updatePasswordRequest struct {
-	OriginPassword     string      `json:"originPassword" binding:"required"`
-	NewPassword        string      `json:"newPassword" binding:"required"`
-	ConfirmNewPassword string      `json:"confirmNewPassword" binding:"required"`
+	OriginPassword     string      `json:"originPassword"`
+	NewPassword        string      `json:"newPassword"`
+	ConfirmNewPassword string      `json:"confirmNewPassword"`
 }
 type resetPasswordRequest struct {
-	Cellphone 		   string 	   `json:"cellphone" binding:"required"`
-	NewPassword        string      `json:"newPassword" binding:"required"`
-	ConfirmNewPassword string      `json:"confirmNewPassword" binding:"required"`
+	Cellphone 		   string 	   `json:"cellphone"`
+	NewPassword        string      `json:"newPassword"`
+	ConfirmNewPassword string      `json:"confirmNewPassword"`
 }
 
 var errorMessages = map[string]bool {
@@ -47,15 +47,20 @@ var errorMessages = map[string]bool {
     "cellphone is empty":    true,
     "can't find the user with cellphone":  true,
 	"invalid phone number format": true,
-	"user already exists": true,
+	"cellphone already exists": true,
 	"the new cellphone already exists": true,
 	"unable to find the user based on the cellphone": true,
 	// password
     "password is empty":     true,
+	"PasswordConfirm is empty": true,
 	"invalid password format": true,
     "incorrect password":    true,
 	"password is different from PasswordConfirm": true, 
 	"originalPassword is wrong": true,
+	// edit password 
+	"original password is empty": true,
+	"new password is empty": true,
+	"confirmed password is empty": true,
 	
 }
 
