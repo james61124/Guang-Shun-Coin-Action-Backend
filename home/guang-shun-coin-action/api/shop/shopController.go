@@ -12,6 +12,7 @@ type ProductRequest struct {
     Page     int    `json:"page" binding:"required"`
     Sort     string `json:"sort"`
     Category string `json:"category"`
+	Price    string  `json:"price"`
 }
 
 type TotalPagesOfProductRequest struct {
@@ -40,7 +41,7 @@ func Product(c *gin.Context) {
 	r := response.New()
 
 	// Validate token and set UUID in context (validation failed.)
-	auth.ValidateToken(c)
+	UUID := auth.ValidateToken(c)
 
 	// Parse request body to JSON format
 	var productRequest ProductRequest
@@ -51,17 +52,21 @@ func Product(c *gin.Context) {
 		return
 	}
 
+	var totalPages int
 	var ProductResponse []response.ProductResponse
-	ProductResponse, err = product(productRequest)
+	var ProductList response.ProductListResponse
+	ProductResponse, totalPages, err = product(productRequest, UUID)
 	if err != nil {
 		r.Message = err.Error()
 		logger.Warn("[SHOP] " + err.Error())
 		c.JSON(http.StatusInternalServerError, r)
 		return
 	}
+	ProductList.Products = ProductResponse
+    ProductList.TotalPages = totalPages
 
 	r.Status = true
-	r.Data = ProductResponse
+	r.Data = ProductList
 	c.JSON(http.StatusOK, r)
 }
 

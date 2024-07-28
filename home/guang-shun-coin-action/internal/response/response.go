@@ -34,6 +34,13 @@ type ProductResponse struct {
 	ImgUrl      string    `json:"imgUrl"`
 	StartAt    time.Time `json:"createAt"`
 	EndedAt     time.Time `json:"endedAt"`
+	BidCount    int      `json:"bidCount"`
+	IsStar      bool     `json:"isStar"`
+}
+
+type ProductListResponse struct {
+    Products   []ProductResponse `json:"products"`
+    TotalPages int                        `json:"totalPages"`
 }
 
 type TotalPagesOfProductResponse struct {
