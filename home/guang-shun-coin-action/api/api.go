@@ -1,8 +1,7 @@
 package api
 
 import (
-	// "Guang_Shun_Coin_Action/api/ledger"
-	// "Guang_Shun_Coin_Action/api/transaction"
+	"Guang_Shun_Coin_Action/api/admin"
 	"Guang_Shun_Coin_Action/api/user"
 	"Guang_Shun_Coin_Action/api/shop"
 	"Guang_Shun_Coin_Action/api/member"
@@ -64,6 +63,9 @@ func Main() {
 	r.POST("/member/addImage", member.AddImage)
 	r.POST("/member/getHistoryBid", member.GetHistoryBid)
 	r.POST("/member/totalPagesOfHistoryBid", member.TotalPagesOfHistoryBid)
+
+	// Admin
+	r.POST("/admin/updateProductPage", admin.UpdateProductPage)
 	
 
 	// // Auth middleware for all routes below

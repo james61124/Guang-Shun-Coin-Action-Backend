@@ -43,6 +43,23 @@ type ProductListResponse struct {
     TotalPages int                        `json:"totalPages"`
 }
 
+type UpdateProductPageResponse struct {
+	ProductId   string    `json:"productId"`
+	ProductName string    `json:"productName"`
+	Category    string    `json:"category"`
+	Price       float64   `json:"price"`
+	MinBidPrice float64   `json:"minBidPrice"`
+	ImgUrl      string    `json:"imgUrl"`
+	StartAt    time.Time `json:"createAt"`
+	EndedAt     time.Time `json:"endedAt"`
+	BidCount    int      `json:"bidCount"`
+}
+
+type UpdateProductPageListResponse struct {
+    Products   []UpdateProductPageResponse `json:"products"`
+    TotalPages int                        `json:"totalPages"`
+}
+
 type TotalPagesOfProductResponse struct {
 	Total   int    `json:"total"`
 }
