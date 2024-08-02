@@ -209,8 +209,8 @@ func detail(pr DetailRequest) (response.DetailResponse, error) {
 	var startAt, endedAt string
 	
 	// select the product information
-	query := "SELECT productName, category, price, minBidPrice, startAt, endedAt FROM Product WHERE productId = ?"
-	err = mariadb.DB.QueryRow(query, pr.ProductID).Scan(&product.Name, &product.Category, &product.Price, &product.MinBidPrice, &startAt, &endedAt)
+	query := "SELECT productName, category, price, minBidPrice, startAt, endedAt, productDescription FROM Product WHERE productId = ?"
+	err = mariadb.DB.QueryRow(query, pr.ProductID).Scan(&product.Name, &product.Category, &product.Price, &product.MinBidPrice, &startAt, &endedAt, &product.Description)
 	if err != nil {
 		logger.Error("[SHOP] " + err.Error())
 		return product, err

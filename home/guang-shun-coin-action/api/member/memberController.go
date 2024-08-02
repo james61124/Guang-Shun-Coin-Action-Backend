@@ -81,11 +81,6 @@ func AddImage(c *gin.Context) {
 
     // Retrieve the list of files from the "files" field
     files := form.File["files"]
-	// if len(files) == 0 {
-	// 	logger.Error("[MEMBER] No files uploaded")
-    //     c.JSON(http.StatusBadRequest, gin.H{"error": "No files uploaded"})
-    //     return
-    // }
 
     // Retrieve the productID from the form data
     productID := c.PostForm("productID")
