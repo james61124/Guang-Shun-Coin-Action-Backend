@@ -334,3 +334,76 @@ func isImage(buf []byte) bool {
     mimeType := http.DetectContentType(buf)
     return mimeType == "image/jpeg" || mimeType == "image/png" || mimeType == "image/gif"
 }
+
+func deleteProduct(pr DeleteProductRequest) (error) {
+	var err error
+	uploadDir := "./assets"
+
+	// Find and delete existing images for the productID from the database
+	query := `SELECT imageId, imageUrl FROM ProductImage WHERE productId = ?`
+	rows, err := mariadb.DB.Query(query, pr.ProductId)
+	if err != nil {
+		logger.Error("[ADMIN] Unable to fetch existing images: " + err.Error())
+		return err
+	}
+	defer rows.Close()
+
+	var existingImages []struct {
+		ImageID  string
+		ImageUrl string
+	}
+
+	for rows.Next() {
+		var img struct {
+			ImageID  string
+			ImageUrl string
+		}
+		if err := rows.Scan(&img.ImageID, &img.ImageUrl); err != nil {
+			logger.Error("[ADMIN] Unable to scan row: " + err.Error())
+			return err
+		}
+		existingImages = append(existingImages, img)
+	}
+
+	// Delete the images from the upload directory
+	for _, img := range existingImages {
+		filePath := filepath.Join(uploadDir, filepath.Base(img.ImageID))
+		if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+			logger.Error("[ADMIN] Unable to delete file: " + err.Error())
+			return err
+		}
+	}
+
+	// Define queries to delete related records
+    deleteProductImagesQuery := `DELETE FROM ProductImage WHERE productId = ?`
+    deleteHistoryQuery := `DELETE FROM History WHERE productId = ?`
+    deleteTrackingListQuery := `DELETE FROM TrackingList WHERE productId = ?`
+    deleteProductQuery := `DELETE FROM Product WHERE productId = ?`
+
+    _, err = mariadb.DB.Exec(deleteProductImagesQuery, pr.ProductId)
+    if err != nil {
+        logger.Error("[ADMIN] " + err.Error())
+        return err
+    }
+
+	_, err = mariadb.DB.Exec(deleteHistoryQuery, pr.ProductId)
+    if err != nil {
+        logger.Error("[ADMIN] " + err.Error())
+        return err
+    }
+
+	_, err = mariadb.DB.Exec(deleteTrackingListQuery, pr.ProductId)
+    if err != nil {
+        logger.Error("[ADMIN] " + err.Error())
+        return err
+    }
+
+	_, err = mariadb.DB.Exec(deleteProductQuery, pr.ProductId)
+    if err != nil {
+        logger.Error("[ADMIN] " + err.Error())
+        return err
+    }
+
+	logger.Info("[ADMIN] Successfully delete the product")
+	return err
+}

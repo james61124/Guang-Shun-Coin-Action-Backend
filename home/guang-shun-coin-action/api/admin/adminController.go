@@ -27,6 +27,10 @@ type UpdateProductDetailRequest struct {
 	Description    string    `json:"description"`
 }
 
+type DeleteProductRequest struct{
+	ProductId   string    `json:"productId"`
+}
+
 func UpdateProductPage(c *gin.Context) {
 	var err error
 
@@ -75,7 +79,7 @@ func UpdateProductDetail(c *gin.Context) {
 	// Parse request body to JSON format
 	var updateProductDetailRequest UpdateProductDetailRequest
 	if err = c.ShouldBindJSON(&updateProductDetailRequest); err != nil {
-		logger.Warn("[SHOP] " + err.Error())
+		logger.Warn("[ADMIN] " + err.Error())
 		r.Message = err.Error()
 		c.JSON(http.StatusBadRequest, r)
 		return
@@ -90,7 +94,6 @@ func UpdateProductDetail(c *gin.Context) {
 	}
 
 	r.Status = true
-	r.Data = updateProductDetailRequest
 	c.JSON(http.StatusOK, r)
 }
 
@@ -139,4 +142,34 @@ func UpdateImage(c *gin.Context) {
     // Return a success message
 	r.Status = true
     c.JSON(http.StatusOK, r)
+}
+
+func DeleteProduct(c *gin.Context) {
+	var err error
+
+	// Create response
+	r := response.New()
+
+	// Validate token and set UUID in context (validation failed.)
+	auth.ValidateToken(c)
+
+	// Parse request body to JSON format
+	var deleteProductRequest DeleteProductRequest
+	if err = c.ShouldBindJSON(&deleteProductRequest); err != nil {
+		logger.Warn("[ADMIN] " + err.Error())
+		r.Message = err.Error()
+		c.JSON(http.StatusBadRequest, r)
+		return
+	}
+
+	err = deleteProduct(deleteProductRequest)
+	if err != nil {
+		r.Message = err.Error()
+		logger.Warn("[ADMIN] " + err.Error())
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+
+	r.Status = true
+	c.JSON(http.StatusOK, r)
 }

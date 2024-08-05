@@ -1,0 +1,1 @@
+{"level":"info","ts":"2024-08-05T14:55:52.965Z","msg":"[MARIADB] Successfully connected to MariaDB!","func":"mariadb.Connect","file":"/home/guang-shun-coin-action/pkg/mariadb/mariadb.go","line":37}

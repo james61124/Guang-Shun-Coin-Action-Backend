@@ -68,6 +68,7 @@ func Main() {
 	r.POST("/admin/updateProductPage", admin.UpdateProductPage)
 	r.POST("/admin/updateProductDetail", admin.UpdateProductDetail)
 	r.POST("/admin/updateImage", admin.UpdateImage)
+	r.POST("/admin/deleteProduct", admin.DeleteProduct)
 	
 
 	// // Auth middleware for all routes below
