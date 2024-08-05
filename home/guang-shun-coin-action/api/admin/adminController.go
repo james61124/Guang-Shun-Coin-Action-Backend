@@ -55,7 +55,6 @@ func UpdateProductPage(c *gin.Context) {
 	ProductResponse, totalPages, err = updateProductPage(productRequest, UUID)
 	if err != nil {
 		r.Message = err.Error()
-		logger.Warn("[ADMIN] " + err.Error())
 		c.JSON(http.StatusInternalServerError, r)
 		return
 	}
@@ -88,7 +87,10 @@ func UpdateProductDetail(c *gin.Context) {
 	err = updateProductDetail(updateProductDetailRequest)
 	if err != nil {
 		r.Message = err.Error()
-		logger.Warn("[ADMIN] " + err.Error())
+		if r.Message == "productName is empty" || r.Message == "endDate earlier than startDate" {
+			c.JSON(http.StatusOK, r)
+			return
+		}
 		c.JSON(http.StatusInternalServerError, r)
 		return
 	}

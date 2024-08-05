@@ -170,6 +170,18 @@ func updateProductPage(pr UpdateProductPageRequest, UUID string) ([]response.Upd
 func updateProductDetail(pr UpdateProductDetailRequest) (error) {
 	var err error
 
+	// Check whether productName is empty
+	if pr.ProductName == "" {
+		logger.Warn("[ADMIN] productName is empty")
+		return errors.New("productName is empty")
+	}
+
+	// Check whether EndDate earlier than StartDate
+	if pr.EndedAt.Before(pr.StartAt) {
+		logger.Warn("[ADMIN] endDate earlier than startDate")
+		return errors.New("endDate earlier than startDate")
+	}
+
 	query := `UPDATE Product SET productName = ?, category = ?, price = ?, minBidPrice = ?, startAt = ?, endedAt = ?, productDescription = ? WHERE productId = ?`
     _, err = mariadb.DB.Exec(query, pr.ProductName, pr.Category, pr.Price, pr.MinBidPrice, pr.StartAt, pr.EndedAt, pr.Description, pr.ProductId)
     if err != nil {
