@@ -83,12 +83,15 @@ type GetBidHistory struct {
 type DetailResponse struct {
 	Name        string      `json:"name"`
 	Category        string      `json:"category"`
+	CurrentPrice   float64     `json:"currentPrice"`
+	IsStar        bool        `json:"isStar"`
 	Price       float64     `json:"price"`
 	MinBidPrice float64     `json:"minBidPrice"`
 	StartTime   time.Time   `json:"startTime"`
 	EndTime     time.Time   `json:"endTime"`
 	Description string      `json:"description"`
 	ImageUrl    []string    `json:"imageUrl"`
+	TotalPageOfHistory    int   `json:"totalPageOfHistory"`
 	History     []BidHistory `json:"history"`
 }
 

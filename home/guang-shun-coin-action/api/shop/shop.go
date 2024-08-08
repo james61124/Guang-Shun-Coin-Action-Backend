@@ -168,6 +168,7 @@ func product(pr ProductRequest, UUID string) ([]response.ProductResponse, int, e
 		`
 		err = mariadb.DB.QueryRow(query, UUID, p.ProductId).Scan(&p.IsStar)
 		if err != nil {
+			logger.Error("[SHOP] " + err.Error())
 			return products, totalPages, err
 		}
 		products = append(products, p)
@@ -203,11 +204,11 @@ func totalPagesOfProduct(pr TotalPagesOfProductRequest) (int, error) {
 	return totalPages, err
 }
 
-func detail(pr DetailRequest) (response.DetailResponse, error) {
+func detail(UUID string, pr DetailRequest) (response.DetailResponse, error) {
 	var err error
 	var product response.DetailResponse
 	var startAt, endedAt string
-	
+
 	// select the product information
 	query := "SELECT productName, category, price, minBidPrice, startAt, endedAt, productDescription FROM Product WHERE productId = ?"
 	err = mariadb.DB.QueryRow(query, pr.ProductID).Scan(&product.Name, &product.Category, &product.Price, &product.MinBidPrice, &startAt, &endedAt, &product.Description)
@@ -227,7 +228,7 @@ func detail(pr DetailRequest) (response.DetailResponse, error) {
 		logger.Error("[SHOP] " + err.Error())
 		return product, err
 	}
-		
+
 	// select image url
 	query = "SELECT imageUrl FROM ProductImage WHERE productId = ? "
 	rows, err := mariadb.DB.Query(query, pr.ProductID)
@@ -248,9 +249,22 @@ func detail(pr DetailRequest) (response.DetailResponse, error) {
 		product.ImageUrl = append(product.ImageUrl, imageUrl)
 	}
 
-	// get history record
-	query = "SELECT userId, bidPrice, bidTime, status FROM History WHERE productId = ? "
-	rows, err = mariadb.DB.Query(query, pr.ProductID)
+	// count total number of history records
+	query = "SELECT COUNT(*) FROM History WHERE productId = ?"
+	var totalRecords int
+	err = mariadb.DB.QueryRow(query, pr.ProductID).Scan(&totalRecords)
+	if err != nil {
+		logger.Error("[SHOP] " + err.Error())
+		return product, err
+	}
+
+	// calculate total pages of history
+	product.TotalPageOfHistory = (totalRecords + 9) / 10 // each page contains 10 records
+
+	// get history record with pagination
+	offset := (pr.HistoryPage - 1) * 10
+	query = "SELECT userId, bidPrice, bidTime, status FROM History WHERE productId = ? ORDER BY bidTime DESC LIMIT 10 OFFSET ?"
+	rows, err = mariadb.DB.Query(query, pr.ProductID, offset)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			logger.Warn("[SHOP] No product is available currently.\n")
@@ -259,8 +273,9 @@ func detail(pr DetailRequest) (response.DetailResponse, error) {
 	}
 	defer rows.Close()
 
+	var highestBidPrice float64 = product.Price
+
 	for rows.Next() {
-		
 		var history response.BidHistory
 		var userId, bidTime string
 
@@ -273,7 +288,11 @@ func detail(pr DetailRequest) (response.DetailResponse, error) {
 			logger.Error("[SHOP] " + err.Error())
 			return product, err
 		}
-		
+
+		if history.BidPrice > highestBidPrice {
+			highestBidPrice = history.BidPrice
+		}
+
 		// get username
 		query = "SELECT username FROM User WHERE userId = ?"
 		err = mariadb.DB.QueryRow(query, userId).Scan(&history.Username)
@@ -283,6 +302,22 @@ func detail(pr DetailRequest) (response.DetailResponse, error) {
 		}
 
 		product.History = append(product.History, history)
+	}
+
+	// set current price
+	product.CurrentPrice = highestBidPrice
+
+	query = `
+		SELECT EXISTS(
+			SELECT 1
+			FROM TrackingList
+			WHERE userId = ? AND productId = ?
+		) AS isTracking;
+	`
+	err = mariadb.DB.QueryRow(query, UUID, pr.ProductID).Scan(&product.IsStar)
+	if err != nil {
+		logger.Error("[SHOP] " + err.Error())
+		return product, err
 	}
 
 	logger.Info("[SHOP] Successfully return product detail")

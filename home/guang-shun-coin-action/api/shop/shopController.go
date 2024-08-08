@@ -21,6 +21,7 @@ type TotalPagesOfProductRequest struct {
 
 type DetailRequest struct {
     ProductID string `json:"productID"`
+	HistoryPage int `json:"historyPage"`
 }
 
 type BidRequest struct {
@@ -109,7 +110,7 @@ func Detail(c *gin.Context) {
 	r := response.New()
 
 	// Validate token and set UUID in context (validation failed.)
-	auth.ValidateToken(c)
+	UUID := auth.ValidateToken(c)
 
 	// Parse request body to JSON format
 	var detailRequest DetailRequest
@@ -120,7 +121,7 @@ func Detail(c *gin.Context) {
 		return
 	}
 
-	detailInfo, err := detail(detailRequest)
+	detailInfo, err := detail(UUID, detailRequest)
 	if err != nil {
 		r.Message = err.Error()
 		logger.Warn("[SHOP] " + err.Error())
