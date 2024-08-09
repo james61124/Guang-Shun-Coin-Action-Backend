@@ -27,17 +27,17 @@ USE GuangShunCoinAction;
 
 CREATE TABLE IF NOT EXISTS User (
     userId VARCHAR(36) PRIMARY KEY NOT NULL,
-    username VARCHAR(36) NOT NULL,
     userPasswd VARCHAR(60) NOT NULL,
     realName VARCHAR(36) NOT NULL,
     cellphone VARCHAR(20) NOT NULL,
-    fbAccount VARCHAR(100),
-    email VARCHAR(100),
-    postcode VARCHAR(36),
-    shippingAddr VARCHAR(255) NOT NULL,
+    nickName VARCHAR(36) NOT NULL,
+    -- username VARCHAR(36) NOT NULL,
+    -- fbAccount VARCHAR(100),
+    -- email VARCHAR(100),
+    -- postcode VARCHAR(36),
+    -- shippingAddr VARCHAR(255) NOT NULL,
     userRole VARCHAR(36) NOT NULL,
-    loginStatus VARCHAR(36) NOT NULL,
-    nickName VARCHAR(36) NOT NULL
+    loginStatus VARCHAR(36) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Product (
