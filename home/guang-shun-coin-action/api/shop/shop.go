@@ -294,7 +294,7 @@ func detail(UUID string, pr DetailRequest) (response.DetailResponse, error) {
 		}
 
 		// get username
-		query = "SELECT username FROM User WHERE userId = ?"
+		query = "SELECT nickName FROM User WHERE userId = ?"
 		err = mariadb.DB.QueryRow(query, userId).Scan(&history.Username)
 		if err != nil {
 			logger.Error("[SHOP] " + err.Error())
@@ -326,10 +326,10 @@ func detail(UUID string, pr DetailRequest) (response.DetailResponse, error) {
 
 func bid(pr BidRequest, UUID string) error {
 
-
 	historyId := uuid.NewString()
 
 	var highestBidPrice sql.NullInt64
+	var midBidPrice sql.NullInt64
 
 	query := `
 		SELECT MAX(bidPrice)
@@ -341,11 +341,38 @@ func bid(pr BidRequest, UUID string) error {
 		logger.Error("[SHOP] " + err.Error())
 		return err
 	}
+
+	query = `
+		SELECT minBidPrice
+		FROM Product
+		WHERE productId = ?;
+	`
+	err = mariadb.DB.QueryRow(query, pr.ProductID).Scan(&midBidPrice)
+	if err != nil {
+		logger.Error("[SHOP] " + err.Error())
+		return err
+	}
+
+	// history has no record
 	if !highestBidPrice.Valid {
-		logger.Info("[SHOP] No historical bids for the given product.")
-	} else if highestBidPrice.Int64 >= int64(pr.BidPrice) {
+		query = `
+			SELECT price
+			FROM Product
+			WHERE productId = ?;
+		`
+		err = mariadb.DB.QueryRow(query, pr.ProductID).Scan(&highestBidPrice)
+		if err != nil {
+			logger.Error("[SHOP] " + err.Error())
+			return err
+		}
+	}
+	
+	if highestBidPrice.Int64 >= int64(pr.BidPrice) {
 		logger.Warn("[SHOP] bidPrice is smaller or equal than highest bidPrice")
 		return errors.New("bidPrice is smaller or equal than highest bidPrice")
+	} else if (int64(pr.BidPrice) - highestBidPrice.Int64) < midBidPrice.Int64 {
+		logger.Warn("[SHOP] bidPrice is smaller than midBidPrice")
+		return errors.New("bidPrice is smaller than midBidPrice")
 	}
 
 	// insert a new history

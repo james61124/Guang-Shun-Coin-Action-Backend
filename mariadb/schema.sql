@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS Product (
     startAt TIMESTAMP NOT NULL,
     shippingStatus VARCHAR(36) NOT NULL,
     productDescription VARCHAR(255) NOT NULL,
+    notified BOOLEAN DEFAULT FALSE;
     FOREIGN KEY (userId) REFERENCES `User` (userId) ON DELETE CASCADE
 );
 

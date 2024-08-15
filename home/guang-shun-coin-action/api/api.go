@@ -42,6 +42,9 @@ func Main() {
 		c.Next()
 	})
 
+	// Auth middleware for all routes below
+	// r.Use(auth.ValidateToken)
+
 	r.StaticFS("/assets",http.Dir("./assets"))
 
 	// Users (no token validation)
@@ -72,35 +75,7 @@ func Main() {
 	r.POST("/admin/deleteProduct", admin.DeleteProduct)
 	
 
-	// // Auth middleware for all routes below
-	// r.Use(auth.ValidateToken)
-
-	// // Users
-	// r.GET("/user/:uuid", user.Get)
-	// r.PUT("/user/", user.Update)
-
-	// // Ledger
-	// r.GET("/ledger", ledger.Get)
-	// r.POST("/ledger", ledger.Create)
-
-	// ledgerRoutes := r.Group("/ledger/:ulid")
-	// ledgerRoutes.Use(validator.ValidateULIDParam)
-	// {
-	// 	// ledger info
-	// 	ledgerRoutes.PATCH("/", ledger.Update)
-
-	// 	// Ledger members
-	// 	ledgerRoutes.POST("/member", ledger.AddMember)
-	// 	ledgerRoutes.PATCH("/member", ledger.UpdateNickname)
-	// 	ledgerRoutes.DELETE("/member", ledger.RemoveMember)
-
-	// 	// Ledger transactions
-	// 	ledgerRoutes.POST("/transaction", transaction.Create)
-	// 	ledgerRoutes.DELETE("/transaction/:utid", transaction.Delete)
-	// 	ledgerRoutes.GET("/transaction/:utid", transaction.Get)
-	// 	ledgerRoutes.GET("/transaction/time", transaction.GetByTime)
-	// 	ledgerRoutes.PUT("/transaction/:utid", transaction.Update)
-	// }
+	
 
 	// Start API service
 	srv := &http.Server{

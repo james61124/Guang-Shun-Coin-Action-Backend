@@ -80,6 +80,11 @@ type GetBidHistory struct {
 	ImageUrl  sql.NullString  `json:"imageUrl"`
 }
 
+type History struct {
+	GetBidHistory []GetBidHistory `json:"getBidHistory"`
+	TotalPages int  `json:"totalPages"`
+}
+
 type DetailResponse struct {
 	Name        string      `json:"name"`
 	Category        string      `json:"category"`

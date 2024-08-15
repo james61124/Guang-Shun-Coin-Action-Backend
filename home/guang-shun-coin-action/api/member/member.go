@@ -184,11 +184,22 @@ func isImage(buf []byte) bool {
     return mimeType == "image/jpeg" || mimeType == "image/png" || mimeType == "image/gif"
 }
 
-func getHistoryBid(rr getHistoryBidRequest, ownerUUID string) ([]response.GetBidHistory, error) {
+func getHistoryBid(rr getHistoryBidRequest, ownerUUID string) (response.History, error) {
+
+	var history response.History
+	var totalPages int
+	query := "SELECT COUNT(*) FROM History WHERE userId = ?"
+	err := mariadb.DB.QueryRow(query, ownerUUID).Scan(&totalPages)
+	if err != nil {
+		logger.Error("[Member] " + err.Error())
+		return history, err
+	}
+	totalPages = (totalPages + 9) / 10
+	history.TotalPages = totalPages
 
 	// get history record
-	query := "SELECT productId, bidPrice, bidTime, status FROM History WHERE userId = ? LIMIT ? OFFSET ?"
-	productNums := 12
+	query = "SELECT productId, bidPrice, bidTime, status FROM History WHERE userId = ? ORDER BY bidTime DESC LIMIT ? OFFSET ?"
+	productNums := 10
 	offset := (rr.Page - 1) * productNums
 	rows, err := mariadb.DB.Query(query, ownerUUID, productNums, offset)
 	if err != nil {
@@ -207,12 +218,12 @@ func getHistoryBid(rr getHistoryBidRequest, ownerUUID string) ([]response.GetBid
 
 		if err = rows.Scan(&historyBid.ProductID, &historyBid.BidPrice, &bidTime, &historyBid.Status); err != nil {
 			logger.Error("[Member] " + err.Error())
-			return historyBidList, err
+			return history, err
 		}
 		historyBid.BidTime, err = time.Parse("2006-01-02 15:04:05", bidTime)
 		if err != nil {
 			logger.Error("[Member] " + err.Error())
-			return historyBidList, err
+			return history, err
 		}
 
 		// get productName
@@ -220,7 +231,7 @@ func getHistoryBid(rr getHistoryBidRequest, ownerUUID string) ([]response.GetBid
 		err := mariadb.DB.QueryRow(query, historyBid.ProductID).Scan(&historyBid.ProductName)
 		if err != nil {
 			logger.Error("[Member] " + err.Error())
-			return historyBidList, err
+			return history, err
 		}
 		
 		// get imageUrl
@@ -228,14 +239,16 @@ func getHistoryBid(rr getHistoryBidRequest, ownerUUID string) ([]response.GetBid
 		err = mariadb.DB.QueryRow(query, historyBid.ProductID).Scan(&historyBid.ImageUrl)
 		if err != nil {
 			logger.Error("[Member] " + err.Error())
-			return historyBidList, err
+			return history, err
 		}
 
 		historyBidList = append(historyBidList, historyBid)
 	}
 
+	history.GetBidHistory = historyBidList
+
 	logger.Info("[Member] Successfully get historyBidList")
-	return historyBidList, nil
+	return history, nil
 }
 
 func totalPagesOfHistoryBid(UUID string) (int, error) {

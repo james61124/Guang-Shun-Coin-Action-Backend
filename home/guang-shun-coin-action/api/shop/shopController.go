@@ -159,6 +159,10 @@ func Bid(c *gin.Context) {
 			c.JSON(http.StatusOK, r)
 			return
 		}
+		if r.Message == "bidPrice is smaller than midBidPrice" {
+			c.JSON(http.StatusOK, r)
+			return
+		}
 		logger.Warn("[SHOP] " + err.Error())
 		c.JSON(http.StatusInternalServerError, r)
 		return
