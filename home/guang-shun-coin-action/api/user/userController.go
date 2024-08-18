@@ -61,6 +61,9 @@ var errorMessages = map[string]bool {
 	"original password is empty": true,
 	"new password is empty": true,
 	"confirmed password is empty": true,
+
+	"realname is empty": true,
+	"nickname is empty": true,
 	
 }
 
@@ -80,7 +83,7 @@ func Login(c *gin.Context) {
 	}
 
 	// Login the user
-	UUID, err := login(loginRequest)
+	UUID, userRole, err := login(loginRequest)
 	if err != nil {
 		r.Message = err.Error()
 		errMessage, _ := r.Message.(string)
@@ -103,7 +106,7 @@ func Login(c *gin.Context) {
 	
 	// return UUID with formatted response
 	r.Status = true
-	r.Data = response.LoginResponse{UUID: UUID, Token: token}
+	r.Data = response.LoginResponse{UUID: UUID, Token: token, Role: userRole}
 	c.JSON(http.StatusOK, r)
 }
 

@@ -1,30 +1,6 @@
 CREATE DATABASE IF NOT EXISTS GuangShunCoinAction;
 USE GuangShunCoinAction;
 
--- CREATE DATABASE `djangoDB`;
--- CREATE USER 'user' IDENTIFIED BY 'password';
--- GRANT ALL privileges ON `djangoDB`.* TO 'user'@'localhost';
--- FLUSH PRIVILEGES;
-
--- CREATE USER 'user'@'*' IDENTIFIED BY 'password';
--- GRANT ALL PRIVILEGES ON djangoDB.* TO 'user'@'*';
--- FLUSH PRIVILEGES;
-
-
--- CREATE TABLE IF NOT EXISTS Product (
--- 	productId VARCHAR PRIMARY KEY,
---     productName VARCHAR(36) NOT NULL,
---     category VARCHAR(36),
---     price DECIMAL,
---     minBidPrice DECIMAL,
---     imgUrl VARCHAR(255), 
---     createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---     startTime TIMESTAMP,
---     endedTime TIMESTAMP
---     shippingStatus VARCHAR(36),
--- );
-
-
 CREATE TABLE IF NOT EXISTS User (
     userId VARCHAR(36) PRIMARY KEY NOT NULL,
     userPasswd VARCHAR(60) NOT NULL,
@@ -37,7 +13,8 @@ CREATE TABLE IF NOT EXISTS User (
     -- postcode VARCHAR(36),
     -- shippingAddr VARCHAR(255) NOT NULL,
     userRole VARCHAR(36) NOT NULL,
-    loginStatus VARCHAR(36) NOT NULL
+    loginStatus VARCHAR(36) NOT NULL,
+    captcha VARCHAR(36)
 );
 
 CREATE TABLE IF NOT EXISTS Product (
@@ -52,7 +29,7 @@ CREATE TABLE IF NOT EXISTS Product (
     startAt TIMESTAMP NOT NULL,
     shippingStatus VARCHAR(36) NOT NULL,
     productDescription VARCHAR(255) NOT NULL,
-    notified BOOLEAN DEFAULT FALSE;
+    notified BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (userId) REFERENCES `User` (userId) ON DELETE CASCADE
 );
 
@@ -90,3 +67,6 @@ CREATE TABLE IF NOT EXISTS CustomService (
     content LONGTEXT NOT NULL,
     FOREIGN KEY (userId) REFERENCES `User`(userId) ON DELETE CASCADE
 );
+
+-- INSERT INTO User (userId, userPasswd, realName, cellphone, nickName, userRole, loginStatus) 
+-- VALUES ('4dbe7ad6-776c-425a-8b78-73c9b031a9ae', '$2a$14$4IsnUa723JQbHrWy0GtZoOxenTg.HhI9TrsQvluDiCdiWXZcwNuiW', 'admin', '0912345678', 'admin', 'admin', 'signIn');

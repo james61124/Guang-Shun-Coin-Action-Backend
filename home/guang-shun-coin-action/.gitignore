@@ -1,3 +1,5 @@
 .DS*
 *.env
 logs/
+assets/
+event.log

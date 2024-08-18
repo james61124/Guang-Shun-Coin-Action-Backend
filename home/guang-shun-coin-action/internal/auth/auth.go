@@ -5,7 +5,7 @@ import (
 	"Guang_Shun_Coin_Action/internal/response"
 	"Guang_Shun_Coin_Action/pkg/logger"
 	"Guang_Shun_Coin_Action/pkg/mariadb"
-	"fmt"
+	// "fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -73,21 +73,24 @@ func ValidateToken(c *gin.Context) string {
 		if ve, ok := err.(*jwt.ValidationError); ok {
 
 			// testing error message: 1
-			fmt.Printf("%d", ve.Errors)
+			// fmt.Printf("%d", ve.Errors)
 
 			if ve.Errors & jwt.ValidationErrorMalformed != 0 {
-				r.Message = "token is not correctly formatted as a JWT (missing or invalid segments)"
+				// r.Message = "token is not correctly formatted as a JWT (missing or invalid segments)"
 			} else if ve.Errors & jwt.ValidationErrorUnverifiable != 0{
-				r.Message = "token cannot be verified due to problems with the token's signature"
+				// r.Message = "token cannot be verified due to problems with the token's signature"
 			} else if ve.Errors & jwt.ValidationErrorSignatureInvalid != 0 {
-				r.Message = "signature validation failed (token's content has been tampered with)"
+				// r.Message = "signature validation failed (token's content has been tampered with)"
 			} else if ve.Errors & jwt.ValidationErrorExpired != 0 {
-				r.Message = "token is expired"
+				// r.Message = "token is expired"
 			} else {
-				r.Message = "can not handle this token"
+				// r.Message = "can not handle this token"
 			}
+
+			r.Message = "user didn't login"
 		}
-		c.JSON(http.StatusUnauthorized, r)
+		logger.Warn("[AUTH] user didn't login")
+		c.JSON(http.StatusOK, r)
 		c.Abort()
 		return ""
 	}

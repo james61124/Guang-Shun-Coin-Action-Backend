@@ -4,15 +4,11 @@ import (
 	"Guang_Shun_Coin_Action/internal/response"
 	"Guang_Shun_Coin_Action/pkg/logger"
 	"Guang_Shun_Coin_Action/pkg/mariadb"
-
-	// "embed"
 	"errors"
 	"regexp"
-
-	// "strings"
-
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	// "fmt"
 )
 
 func hashPassword(password string) (string, error) {
@@ -31,16 +27,16 @@ func validateCellphone(cellphone string) error {
 		return errors.New("cellphone is empty")
 	}
 
-	pattern := `^09\d{8}$`
-	regex, err := regexp.Compile(pattern)
-	if err != nil {
-		logger.Error("[USER] Error compiling regex: " + cellphone)
-		return err
-	}
-	if !regex.MatchString(cellphone) {
-		logger.Warn("[USER] Invalid phone number format")
-		return errors.New("invalid phone number format")
-	}
+	// pattern := `^09\d{8}$`
+	// regex, err := regexp.Compile(pattern)
+	// if err != nil {
+	// 	logger.Error("[USER] Error compiling regex: " + cellphone)
+	// 	return err
+	// }
+	// if !regex.MatchString(cellphone) {
+	// 	logger.Warn("[USER] Invalid phone number format")
+	// 	return errors.New("invalid phone number format")
+	// }
 
 	return nil
 }
@@ -79,6 +75,16 @@ func validatePassword(password string) error {
 func register(rr registerRequest) error {
 	var query, cellphone string
 	var err error
+
+	if rr.RealName == "" {
+		logger.Warn("[USER] realname is empty")
+		return errors.New("realname is empty")
+	}
+
+	if rr.NickName == "" {
+		logger.Warn("[USER] nickname is empty")
+		return errors.New("nickname is empty")
+	}
 
 
 	err = validateCellphone(rr.Cellphone)
@@ -152,40 +158,89 @@ func register(rr registerRequest) error {
 	return nil
 }
 
-func login(lr loginRequest) (string, error) {
-	var query, UUID, password, realName string
+// func sendVerificationEmail(email string, token string) {
+// 	verificationLink := fmt.Sprintf("http://localhost:8080/verify?token=%s", token)
+
+// 	htmlBody := fmt.Sprintf(`
+// 		<!DOCTYPE html>
+// 		<html>
+// 		<head>
+// 			<style>
+// 				.button {
+// 					background-color: #4CAF50; /* 綠色 */
+// 					border: none;
+// 					color: white;
+// 					padding: 10px 20px;
+// 					text-align: center;
+// 					text-decoration: none;
+// 					display: inline-block;
+// 					font-size: 16px;
+// 					margin: 4px 2px;
+// 					cursor: pointer;
+// 					border-radius: 5px;
+// 				}
+// 			</style>
+// 		</head>
+// 		<body>
+// 			<p>你好，</p>
+// 			<p>請點擊下方按鈕來驗證你的電子郵件地址：</p>
+// 			<a href="%s" class="button">驗證我的電子郵件</a>
+// 			<p>如果按鈕無法點擊，請複製並貼上以下連結到你的瀏覽器：</p>
+// 			<p><a href="%s">%s</a></p>
+// 			<p>謝謝！</p>
+// 		</body>
+// 		</html>
+// 	`, verificationLink, verificationLink, verificationLink)
+
+// 	m := gomail.NewMessage()
+// 	m.SetHeader("From", "your-email@example.com") 
+// 	m.SetHeader("To", email)
+// 	m.SetHeader("Subject", "請驗證你的電子郵件地址")
+// 	m.SetBody("text/html", htmlBody)
+
+// 	d := gomail.NewDialer("smtp.example.com", 587, "your-email@example.com", "your-email-password")
+// 	if err := d.DialAndSend(m); err != nil {
+// 		fmt.Println("Failed to send email:", err)
+// 		return
+// 	}
+
+// 	fmt.Println("Verification email sent to", email)
+// }
+
+func login(lr loginRequest) (string, string, error) {
+	var query, UUID, password, realName, userRole string
 	var err error
 
 	err = validateCellphone(lr.Cellphone)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	err = validatePassword(lr.Password)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// Get user password
-	query = "SELECT userId, userPasswd, realName FROM User WHERE cellphone = ?"
-	err = mariadb.DB.QueryRow(query, lr.Cellphone).Scan(&UUID, &password, &realName)
+	query = "SELECT userId, userPasswd, realName, userRole FROM User WHERE cellphone = ?"
+	err = mariadb.DB.QueryRow(query, lr.Cellphone).Scan(&UUID, &password, &realName, &userRole)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			logger.Warn("[USER] User: " + lr.Cellphone + " not found")
-			return "", errors.New("can't find the user with cellphone")
+			return "", "", errors.New("can't find the user with cellphone")
 		}
 		logger.Error("[USER] " + err.Error())
-		return "", err
+		return "", "", err
 	}
 
 	// Check if password is correct
 	if !checkPasswordHash(lr.Password, password) {
 		logger.Warn("[USER] Incorrect password for User: " + realName + " " + lr.Cellphone)
-		return "", errors.New("incorrent password")
+		return "", "", errors.New("incorrent password")
 	}
 
 	logger.Info("[USER] Successfully logged in user with Username: " + realName)
 
-	return UUID, err
+	return UUID, userRole, err
 }
 
 func getUserInfo(UUID string) (response.GetUserInfoResponse, error) {

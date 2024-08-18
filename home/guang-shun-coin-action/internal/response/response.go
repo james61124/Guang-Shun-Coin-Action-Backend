@@ -19,6 +19,7 @@ type RegisterResponse struct {
 type LoginResponse struct {
 	UUID  string `json:"UUID"`
 	Token string `json:"Token"`
+	Role  string `json:"Role"`
 }
 
 type AddProductResponse struct {

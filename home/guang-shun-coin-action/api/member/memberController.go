@@ -117,6 +117,10 @@ func GetHistoryBid(c *gin.Context) {
 	// Validate token and set UUID in context (validation failed.)
 	UUID := auth.ValidateToken(c)
 
+	if UUID == "" {
+		return
+	}
+
 	// Parse request body to JSON format
 	var getHistoryBidRequest getHistoryBidRequest
 	if err = c.ShouldBindJSON(&getHistoryBidRequest); err != nil {

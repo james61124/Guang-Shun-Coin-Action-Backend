@@ -43,6 +43,9 @@ func Product(c *gin.Context) {
 
 	// Validate token and set UUID in context (validation failed.)
 	UUID := auth.ValidateToken(c)
+	if UUID == "" {
+		return
+	}
 
 	// Parse request body to JSON format
 	var productRequest ProductRequest
@@ -199,5 +202,44 @@ func Star(c *gin.Context) {
 	}
 
 	r.Status = true
+	c.JSON(http.StatusOK, r)
+}
+
+func MyProduct(c *gin.Context) {
+	var err error
+
+	// Create response
+	r := response.New()
+
+	// Validate token and set UUID in context (validation failed.)
+	UUID := auth.ValidateToken(c)
+	if UUID == "" {
+		return
+	}
+
+	// Parse request body to JSON format
+	var productRequest ProductRequest
+	if err = c.ShouldBindJSON(&productRequest); err != nil {
+		logger.Warn("[SHOP] " + err.Error())
+		r.Message = err.Error()
+		c.JSON(http.StatusBadRequest, r)
+		return
+	}
+
+	var totalPages int
+	var ProductResponse []response.ProductResponse
+	var ProductList response.ProductListResponse
+	ProductResponse, totalPages, err = myProduct(productRequest, UUID)
+	if err != nil {
+		r.Message = err.Error()
+		logger.Warn("[SHOP] " + err.Error())
+		c.JSON(http.StatusInternalServerError, r)
+		return
+	}
+	ProductList.Products = ProductResponse
+    ProductList.TotalPages = totalPages
+
+	r.Status = true
+	r.Data = ProductList
 	c.JSON(http.StatusOK, r)
 }
